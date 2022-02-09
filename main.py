@@ -1,6 +1,7 @@
 #  Copyright (c) 2022-2022 Etienne Clairis
 #
 #
+#
 
 import Animator
 import Electronic
@@ -9,18 +10,18 @@ import Updater
 from Config import *
 
 
-def start_nabaztag():
-    Logger.log("hello it's NabazHome !", False)
-    Electronic.initialize_components()
-    Animator.animate(ANIMATION_START)
-    updater = Updater.UpdaterThread()
-    updater.start()
+class Main():
+    def __init__(self):
+        pass
 
-
-def test():
-    pass
+    def start_nabaztag(self):
+        Logger.log("hello it's NabazHome !", False)
+        Electronic.initialize_components()
+        Animator.animate(ANIMATION_START)
+        updater = Updater.UpdaterThread()
+        updater.start()
 
 
 if __name__ == '__main__':
-    # test()
-    start_nabaztag()
+    main = Main()
+    main.start_nabaztag()

@@ -1,6 +1,7 @@
 #  Copyright (c) 2022-2022 Etienne Clairis
 #
 #
+#
 import time
 from datetime import datetime
 from threading import *
@@ -10,14 +11,19 @@ import requests
 import Alarm
 import Logger
 from Config import *
+from Weather import Weather
 
 
 class UpdaterThread(Thread):
     def __init__(self):
         Thread.__init__(self)
+        self.lat = LAT
+        self.lon = LON
+
         self.now = None
         self.now_day = None
         self.stop = False
+        self.weather = Weather(self.lat, self.lon)
 
     def run(self):
         Logger.log("updater started")
@@ -34,6 +40,7 @@ class UpdaterThread(Thread):
         # todo update time, messages,
         self.update_datetime()
         Alarm.check_alarms(self.now)
+        self.weather.update()
         pass
 
     def update_datetime(self):
