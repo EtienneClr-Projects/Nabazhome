@@ -2,6 +2,7 @@
 #
 #
 #
+#
 
 import Animator
 import Electronic
@@ -10,11 +11,12 @@ import Updater
 from Config import *
 
 
-class Main():
+class Main:
     def __init__(self):
         pass
 
-    def start_nabaztag(self):
+    @staticmethod
+    def start_nabaztag():
         Logger.log("hello it's NabazHome !", False)
         Electronic.initialize_components()
         Animator.animate(ANIMATION_START)

@@ -1,7 +1,10 @@
 #  Copyright (c) 2022-2022 Etienne Clairis
 #
 #
+#
 import sys
+
+PIR_PIN = 7
 
 
 def initialize_components():
@@ -9,5 +12,4 @@ def initialize_components():
     if not sys.platform == "win32":
         import RPi.GPIO as GPIO
         GPIO.setmode(GPIO.BOARD)
-        PIR_PIN = 7
         GPIO.setup(PIR_PIN, GPIO.IN)
