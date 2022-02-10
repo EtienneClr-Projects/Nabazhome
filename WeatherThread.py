@@ -2,6 +2,7 @@
 #
 #
 #
+#
 # USING https://github.com/csparpa/pyowm
 # Doc https://pyowm.readthedocs.io/en/latest/v3/code-recipes.html#onecall
 
@@ -39,16 +40,19 @@ class WeatherThread(Thread):
         self.threeH_status = None  # "peu nuageux"
         self.threeH_precipitation_probability = None  # int [0-1]
 
+        self.update()
+
     def run(self):
         Logger.log("Weather thread started")
         i = 0
-        while i < 10:
+        while i < 10000:
             Logger.log("Weathering")
             i += 1
             time.sleep(WEATHER_UPDATE_TIME)
             self.update()
 
     def update(self):
+        # CURRENT WEATHER
         self.current_weather = self.__mgr.weather_at_coords(self.__lat, self.__lon).weather
         _ = self.current_weather.temperature("celsius")
         # {'temp': 6.05, 'temp_max': 6.18, 'temp_min': 2.54, 'feels_like': 3.47, 'temp_kf': None}
@@ -59,7 +63,11 @@ class WeatherThread(Thread):
 
         one_call = self.__mgr.one_call(self.__lat, self.__lon)
         self.current_status = one_call.current.detailed_status
-        self.threeH_status = one_call.forecast_hourly[4].detailed_status  # in 3 hours
-        self.threeH_precipitation_probability = one_call.forecast_hourly[4].precipitation_probability  # in 3 hours
+
+        # 3H FORECAST WEATHER
+        self.threeH_weather = one_call.forecast_hourly[4]
+        _ = self.threeH_weather
+        self.threeH_status = _.detailed_status  # in 3 hours
+        self.threeH_precipitation_probability = _.precipitation_probability  # in 3 hours
         # print(one_call.forecast_hourly.rain)
         # daily forecast impossible

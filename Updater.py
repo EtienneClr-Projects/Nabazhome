@@ -4,6 +4,7 @@
 #
 #
 #
+#
 import time
 from threading import *
 
@@ -22,6 +23,7 @@ class UpdaterThread(Thread):
         # self.__now = None
         # self.__now_day = None
         self.__alarm = Alarm()
+        self.__alarm.set_alarm("13:20")
         self.__weather = WeatherThread(self.__lat, self.__lon)
 
         self.__stop = False
@@ -30,10 +32,12 @@ class UpdaterThread(Thread):
         Logger.log("updater started")
         self.__weather.start()
         i = 0
-        while i < 10:  # not self.stop:
+        while i < 1000:  # not self.stop:
             i += 1
             Logger.log("updating...")
             self.update_things()
+            print("CURRENT WEATHER : ", self.__weather.current_weather)
+            print("3H      WEATHER : ", self.__weather.threeH_weather)
             Logger.log("updated !")
             time.sleep(GLOBAL_UPDATE_TIME)
             Logger.log("")
@@ -41,8 +45,9 @@ class UpdaterThread(Thread):
     def update_things(self):
         # todo update time, messages,
         # self.update_datetime()
-        self.__alarm.check_alarms()
-        pass
+        if self.__alarm.check_alarms():
+            self.__alarm.ring()
+            self.__alarm.give_infos_to_user(self.__weather)
 
     # def update_datetime(self):
     #     # https://python.plainenglish.io/how-to-store-date-and-time-in-python-e951413d134
