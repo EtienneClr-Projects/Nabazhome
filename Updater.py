@@ -3,44 +3,45 @@
 #
 #
 #
+#
 import time
 from threading import *
 
 import Logger
 from Alarm import Alarm
 from Config import *
-from Weather import Weather
+from WeatherThread import WeatherThread
 
 
 class UpdaterThread(Thread):
     def __init__(self):
         Thread.__init__(self)
-        self.lat = LAT
-        self.lon = LON
+        self.__lat = LAT
+        self.__lon = LON
 
-        # self.now = None
-        # self.now_day = None
-        self.alarm = Alarm()
-        self.weather = Weather(self.lat, self.lon)
+        # self.__now = None
+        # self.__now_day = None
+        self.__alarm = Alarm()
+        self.__weather = WeatherThread(self.__lat, self.__lon)
 
-        self.stop = False
+        self.__stop = False
 
     def run(self):
         Logger.log("updater started")
+        self.__weather.start()
         i = 0
-        while i < 1:  # not self.stop:
+        while i < 10:  # not self.stop:
             i += 1
             Logger.log("updating...")
             self.update_things()
             Logger.log("updated !")
-            time.sleep(UPDATE_TIME)
+            time.sleep(GLOBAL_UPDATE_TIME)
             Logger.log("")
 
     def update_things(self):
         # todo update time, messages,
         # self.update_datetime()
-        self.alarm.check_alarms()
-        self.weather.update()
+        self.__alarm.check_alarms()
         pass
 
     # def update_datetime(self):
