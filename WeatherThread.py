@@ -3,6 +3,7 @@
 #
 #
 #
+#
 # USING https://github.com/csparpa/pyowm
 # Doc https://pyowm.readthedocs.io/en/latest/v3/code-recipes.html#onecall
 
@@ -17,9 +18,10 @@ from Config import *
 
 
 class WeatherThread(Thread):
-    def __init__(self, lat, lon):
+    def __init__(self, lat, lon, updater):
         Thread.__init__(self)
         # CONFIG
+        self.updater = updater
         self.__lat = lat
         self.__lon = lon
         config_dict = get_default_config()
@@ -40,16 +42,17 @@ class WeatherThread(Thread):
         self.threeH_status = None  # "peu nuageux"
         self.threeH_precipitation_probability = None  # int [0-1]
 
-        self.update()
-
     def run(self):
         Logger.log("Weather thread started")
         i = 0
         while i < 10000:
             Logger.log("Weathering")
             i += 1
+            if self.updater.is_connected_to_internet:
+                self.update()
+            else:
+                print("WEATHER CAN'T UPDATE")
             time.sleep(WEATHER_UPDATE_TIME)
-            self.update()
 
     def update(self):
         # CURRENT WEATHER

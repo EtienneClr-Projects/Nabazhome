@@ -5,8 +5,11 @@
 #
 #
 #
+#
 import time
 from threading import *
+
+import requests
 
 import Logger
 from Alarm import Alarm
@@ -24,9 +27,10 @@ class UpdaterThread(Thread):
         # self.__now_day = None
         self.__alarm = Alarm()
         self.__alarm.set_alarm("13:20")
-        self.__weather = WeatherThread(self.__lat, self.__lon)
+        self.__weather = WeatherThread(self.__lat, self.__lon, self)
 
         self.__stop = False
+        self.is_connected_to_internet = self.check_connection()
 
     def run(self):
         Logger.log("updater started")
@@ -43,11 +47,22 @@ class UpdaterThread(Thread):
             Logger.log("")
 
     def update_things(self):
-        # todo update time, messages,
+        self.is_connected_to_internet = self.check_connection()
+        # if self.__is_connected_to_internet:
         # self.update_datetime()
         if self.__alarm.check_alarms():
             self.__alarm.ring()
             self.__alarm.give_infos_to_user(self.__weather)
+
+    @staticmethod
+    def check_connection():
+        url = "http://www.google.fr"
+        timeout = 5
+        try:
+            requests.get(url, timeout=timeout)
+            return True
+        except (requests.ConnectionError, requests.Timeout):
+            return False
 
     # def update_datetime(self):
     #     # https://python.plainenglish.io/how-to-store-date-and-time-in-python-e951413d134
