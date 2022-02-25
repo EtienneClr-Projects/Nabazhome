@@ -4,6 +4,7 @@
 #
 #
 #
+#
 
 # ANIMATIONS
 ANIMATION_START = "animation start"
@@ -15,3 +16,8 @@ WEATHER_UPDATE_TIME = 10  # 3600 seconds
 
 LAT = 48.0942331  # Chaumot : 48.0942331,3.2185206
 LON = 3.2185206
+
+# ELECTRONIC
+LEFT_CODER = 12  # todo
+RIGHT_CODER = 13  # todo
+TOOTH_NUMBER = 30  # todo
