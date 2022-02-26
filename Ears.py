@@ -1,26 +1,21 @@
-#  Copyright (c) 2022-2022 Etienne Clairis
+#  Copyright (c) 2022 Etienne Clairis
 #
-#
-#
+
+import Motors
 import threading
+import time
 
 import RPi.GPIO as GPIO
 
-from Config import TOOTH_NUMBER
+from Config import *
 
-
-def turn_ears(ear_left_loops, ear_right_loops, synchronized):
-    # todo
-    pass
-
+GPIO.setwarnings(False)
 
 def _map(x, in_min, in_max, out_min, out_max):
     return int((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min)
 
 
-# todo mettre les pins en input
-
-class EarThread(threading.Thread):
+class EarPositionThread(threading.Thread):
     def __init__(self, side, pin):
         threading.Thread.__init__(self)
         self.side = side
@@ -35,8 +30,26 @@ class EarThread(threading.Thread):
 
         while not stop:
             val = GPIO.input(self.pin)
+            GPIO.output(MOTOR, 1)
+
             if val != last:
-                counter = (counter + 1) % TOOTH_NUMBER
+                counter = counter + 1
                 self.rotation = _map(counter, 0, TOOTH_NUMBER, 0, 360)
-                print(self.rotation)
+                if counter == TOOTH_NUMBER:
+                    counter = 0
+                    print("TOUUUUUR")
             last = val
+            time.sleep(0.05)
+        GPIO.cleanup()
+
+
+if __name__ == '__main__':
+    GPIO.setmode(GPIO.BCM)
+
+    GPIO.setup(LEFT_CODER, GPIO.IN)
+
+    LEFT_EAR = EarPositionThread("left", LEFT_CODER)
+    LEFT_EAR.start()
+
+    Motors.init_motors()
+    Motors.turn_motors(True, True)

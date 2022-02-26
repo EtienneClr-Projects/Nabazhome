@@ -4,6 +4,7 @@
 #
 #
 #
+#
 import sys
 
 from RPi.GPIO import GPIO
@@ -30,8 +31,8 @@ def initialize_components():
         GPIO.setmode(GPIO.BOARD)
         for pin in ALL_PINS_OUT:
             GPIO.setup(pin, GPIO.OUT)
-        EAR_LEFT = Ears.EarThread(MOTOR_LEFT)
-        EAR_RIGHT = Ears.EarThread(MOTOR_RIGHT)
+        EAR_LEFT = Ears.EarPositionThread(MOTOR_LEFT)
+        EAR_RIGHT = Ears.EarPositionThread(MOTOR_RIGHT)
         EAR_LEFT.start()
         EAR_RIGHT.start()
         # GPIO.setup(12, GPIO.OUT, initial=GPIO.HIGH)  # broche 12 est une sortie initialement a l'etat haut
