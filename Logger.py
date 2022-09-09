@@ -2,15 +2,18 @@
 #
 #
 #
+#
 from inspect import stack
 
 
 def caller_to_console_color(caller):
     caller = caller.lower()
-    if caller == "weather":
+    if caller == "weather":  # green
         return "\033[32m"
-    elif caller == "alarm":
+    elif caller == "alarm":  # blue
         return "\033[30;44m"
+    elif caller == "error":  # red
+        return "\033[31m"
     else:
         return "\033[38;5;7m"
 

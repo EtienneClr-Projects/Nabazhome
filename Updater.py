@@ -7,6 +7,8 @@
 #
 #
 #
+#
+#
 import time
 from datetime import datetime
 from threading import *
@@ -16,35 +18,38 @@ import requests
 import Logger
 from Alarm import Alarm
 from Config import *
-from WeatherThread import WeatherThread
+from Weather import Weather
 
 
 class UpdaterThread(Thread):
     def __init__(self):
         Thread.__init__(self)
+        self.do_update_weather = False
         self.__lat = LAT
         self.__lon = LON
 
         # self.__now = None
         # self.__now_day = None
         self.__alarm = Alarm()
-        self.__alarm.set_alarm("13:37")
-        self.__weather = WeatherThread(self.__lat, self.__lon, self)
+        self.__alarm.set_alarm("20:44")
+        self.__weather = Weather(self.__lat, self.__lon, self)
 
         self.__stop = False
         self.is_connected_to_internet = self.check_connection()
 
     def run(self):
         Logger.log("updater started", True)
-        self.__weather.start()
-        i = 0
-        while i < 1000:  # not self.stop:
-            i += 1
-            Logger.log("updating...", True)
+
+        while not self.__stop:
+            if self.do_update_weather:
+                Logger.log("updating weather...", True, "weather")
+                self.__weather.update()
+                Logger.log("CURRENT WEATHER : " + str(self.__weather.current_weather), False, "weather")
+                Logger.log("3H      WEATHER : " + str(self.__weather.threeH_weather), False, "weather")
+                Logger.log("weather updated !", True, "weather")
+                self.do_update_weather = False
+
             self.update_things()
-            Logger.log("CURRENT WEATHER : " + str(self.__weather.current_weather), False, "weather")
-            Logger.log("3H      WEATHER : " + str(self.__weather.threeH_weather), False, "weather")
-            Logger.log("updated !", True)
             time.sleep(GLOBAL_UPDATE_TIME)
             Logger.line()
 
@@ -52,6 +57,10 @@ class UpdaterThread(Thread):
         self.is_connected_to_internet = self.check_connection()
         if self.is_connected_to_internet:
             self.update_datetime()
+        if self.__alarm.check_1h_before_alarm():  # update the weather 1h before the alarm
+            Logger.log("1h before alarm", False, "alarm")
+            self.do_update_weather = True
+
         if self.__alarm.check_alarms():
             self.__alarm.ring()
             self.__alarm.give_infos_to_user(self.__weather)

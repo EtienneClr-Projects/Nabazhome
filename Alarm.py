@@ -5,6 +5,7 @@
 #
 #
 #
+#
 # using https://python.plainenglish.io/how-to-store-date-and-time-in-python-e951413d134
 from datetime import datetime
 
@@ -14,6 +15,7 @@ import Logger
 class Alarm:
     def __init__(self):
         self.__alarm = None
+        self.__checked_1h_before_alarm = False
 
     def set_alarm(self, string):
         """
@@ -34,6 +36,20 @@ class Alarm:
             if now > self.__alarm:
                 self.__alarm = None
                 return True
+        return False
+
+    def check_1h_before_alarm(self):
+        """
+        Checks if it is one hour before the alarm.
+        :return: True
+        """
+        now = datetime.now()
+        if self.__alarm is not None:
+            if not self.__checked_1h_before_alarm:
+                one_h_before = self.__alarm.replace(hour=self.__alarm.hour - 1)
+                if now >= one_h_before:
+                    self.__checked_1h_before_alarm = True
+                    return True
         return False
 
     @staticmethod

@@ -6,22 +6,19 @@
 #
 #
 #
+#
 # USING https://github.com/csparpa/pyowm
 # Doc https://pyowm.readthedocs.io/en/latest/v3/code-recipes.html#onecall
 
-import time
-from threading import Thread
-
+from pyowm.commons import exceptions
 from pyowm.owm import OWM
 from pyowm.utils.config import get_default_config
 
 import Logger
-from Config import *
 
 
-class WeatherThread(Thread):
+class Weather():
     def __init__(self, lat, lon, updater):
-        Thread.__init__(self)
         # CONFIG
         self.updater = updater
         self.__lat = lat
@@ -44,18 +41,6 @@ class WeatherThread(Thread):
         self.threeH_status = None  # "peu nuageux"
         self.threeH_precipitation_probability = None  # int [0-1]
 
-    def run(self):
-        Logger.log("Weather thread started", True)
-        i = 0
-        while i < 10000:
-            Logger.log("Weathering", True)
-            i += 1
-            if self.updater.is_connected_to_internet:
-                self.update()
-            else:
-                Logger.log("WEATHER CAN'T UPDATE", True)
-            time.sleep(WEATHER_UPDATE_TIME)
-
     def update(self):
         # CURRENT WEATHER
         self.current_weather = self.__mgr.weather_at_coords(self.__lat, self.__lon).weather
@@ -66,11 +51,19 @@ class WeatherThread(Thread):
         self.current_temp_max = _['temp_max']
         self.current_temp_feels_like = _['feels_like']
 
-        one_call = self.__mgr.one_call(self.__lat, self.__lon)
+        try:
+            one_call = self.__mgr.one_call(self.__lat, self.__lon)
+        except exceptions.APIRequestError:
+            Logger.log("APIRequestError calling for WEATHER", True, "error")
+            return
         self.current_status = one_call.current.detailed_status
 
         # 3H FORECAST WEATHER
-        self.threeH_weather = one_call.forecast_hourly[4]
+        try:
+            self.threeH_weather = one_call.forecast_hourly[4]
+        except exceptions.APIRequestError:
+            Logger.log("APIRequestError calling for 3h WEATHER", True, "error")
+            return
         _ = self.threeH_weather
         self.threeH_status = _.detailed_status  # in 3 hours
         self.threeH_precipitation_probability = _.precipitation_probability  # in 3 hours
