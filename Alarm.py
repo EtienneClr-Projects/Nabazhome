@@ -4,6 +4,7 @@
 #
 #
 #
+#
 # using https://python.plainenglish.io/how-to-store-date-and-time-in-python-e951413d134
 from datetime import datetime
 
@@ -42,7 +43,7 @@ class Alarm:
         :return: None
         """
         # print in a blue color "RIIIIIIING"
-        Logger.log("RIIIIIIING", False, "alarm")
+        Logger.log("RIIIIIIING", False)
 
         # pygame.mixer.init()
         # pygame.mixer.music.load("Alarm.mp3")
@@ -52,5 +53,6 @@ class Alarm:
 
     @staticmethod
     def give_infos_to_user(weather):
-        Logger.log("WEATHER INFOS FOR USER:", False, "weather")
-        Logger.log(weather.current_weather.__str__(), False, "weather")
+        pass
+        # Logger.log("WEATHER INFOS FOR USER:", False)
+        # Logger.log(weather.current_weather.__str__(), False)

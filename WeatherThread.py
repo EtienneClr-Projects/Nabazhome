@@ -5,6 +5,7 @@
 #
 #
 #
+#
 # USING https://github.com/csparpa/pyowm
 # Doc https://pyowm.readthedocs.io/en/latest/v3/code-recipes.html#onecall
 
@@ -44,15 +45,15 @@ class WeatherThread(Thread):
         self.threeH_precipitation_probability = None  # int [0-1]
 
     def run(self):
-        Logger.log("Weather thread started", True, "weather")
+        Logger.log("Weather thread started", True)
         i = 0
         while i < 10000:
-            Logger.log("Weathering", True, "weather")
+            Logger.log("Weathering", True)
             i += 1
             if self.updater.is_connected_to_internet:
                 self.update()
             else:
-                Logger.log("WEATHER CAN'T UPDATE", True, "weather")
+                Logger.log("WEATHER CAN'T UPDATE", True)
             time.sleep(WEATHER_UPDATE_TIME)
 
     def update(self):
