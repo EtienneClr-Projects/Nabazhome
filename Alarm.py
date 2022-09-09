@@ -3,8 +3,11 @@
 #
 #
 #
+#
 # using https://python.plainenglish.io/how-to-store-date-and-time-in-python-e951413d134
 from datetime import datetime
+
+import Logger
 
 
 class Alarm:
@@ -34,9 +37,20 @@ class Alarm:
 
     @staticmethod
     def ring():
-        print("DRIIIIIIIIIIING")
+        """
+        Ring the alarm with the speaker. Play the sound file named Alarm.mp3
+        :return: None
+        """
+        # print in a blue color "RIIIIIIING"
+        Logger.log("RIIIIIIING", False, "alarm")
+
+        # pygame.mixer.init()
+        # pygame.mixer.music.load("Alarm.mp3")
+        # pygame.mixer.music.play()
+        # while pygame.mixer.music.get_busy():
+        #     pass
 
     @staticmethod
     def give_infos_to_user(weather):
-        print("WEATHER INFOS FOR USER:")
-        print(weather.current_weather)
+        Logger.log("WEATHER INFOS FOR USER:", False, "weather")
+        Logger.log(weather.current_weather.__str__(), False, "weather")

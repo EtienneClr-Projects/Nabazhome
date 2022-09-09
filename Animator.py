@@ -1,7 +1,7 @@
 #  Copyright (c) 2022-2022 Etienne Clairis
 #
 #
-import Ears
+#
 from Config import *
 
 
@@ -10,7 +10,7 @@ def animate_ears(animation):
         ear_left_loops = 1
         ear_right_loops = 1
         synchronized = True
-        Ears.turn_ears(ear_left_loops, ear_right_loops, synchronized)
+       # Ears.turn_ears(ear_left_loops, ear_right_loops, synchronized)
     pass
 
 

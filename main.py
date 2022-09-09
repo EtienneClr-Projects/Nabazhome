@@ -5,9 +5,9 @@
 #
 #
 #
+#
 
 import Animator
-import Electronic
 import Logger
 import Updater
 from Config import *
@@ -20,7 +20,7 @@ class Main:
     @staticmethod
     def start_nabaztag():
         Logger.log("hello it's NabazHome !", False)
-        Electronic.initialize_components()
+        # Electronic.initialize_components()
         Animator.animate(ANIMATION_START)
         updater = Updater.UpdaterThread()
         updater.start()
