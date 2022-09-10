@@ -2,15 +2,17 @@
 #
 #
 #
+#
 
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from threading import *
 
 import requests
 
 import Logger
 from Alarm import Alarm
+from Calendar import Calendar
 from Config import *
 from Weather import Weather
 
@@ -18,14 +20,17 @@ from Weather import Weather
 class UpdaterThread(Thread):
     def __init__(self):
         Thread.__init__(self)
+        self.__calendar = Calendar()
         self.do_update_weather = False
+        self.do_update_calendar = False
+        self.__next_time_to_update_calendar = datetime.now()
+
         self.__lat = LAT
         self.__lon = LON
 
         # self.__now = None
         # self.__now_day = None
         self.__alarm = Alarm()
-        self.__alarm.set_alarm("20:44")  # todo debug only
         self.__weather = Weather(self.__lat, self.__lon, self)
 
         self.__stop = False
@@ -43,8 +48,18 @@ class UpdaterThread(Thread):
                 Logger.log("weather updated !", True, "weather")
                 self.do_update_weather = False
 
+            if self.do_update_calendar:
+                Logger.log("updating calendar...", True, "calendar")
+                self.__calendar.get_events()
+                Logger.log("calendar updated !", True, "calendar")
+                self.do_update_calendar = False
+
             self.update_things()
             time.sleep(GLOBAL_UPDATE_TIME)
+            if self.__next_time_to_update_calendar < datetime.now():  # todo use the right time
+                self.do_update_calendar = True
+                self.__next_time_to_update_calendar = datetime.now().replace(second=0, microsecond=0) \
+                                                      + timedelta(seconds=CALENDAR_UPDATE_TIME)
             Logger.line()
 
     def update_things(self):
@@ -82,8 +97,7 @@ class UpdaterThread(Thread):
         if response.find("unavailable") != -1:
             Logger.log("worldclockAPI unavailable", True)
             return
-        Logger.log("response : " + response, False)
-        self.now = datetime.strptime(response[41:57], "%Y-%m-%dT%H:%M")
+        self.now = datetime.strptime(response[41:57], "%Y-%m-%dT%H:%M")  # todo self.now not defined in __init__
         self.now_day = response[133:response.find("""\",\"timeZoneName""")]
 
         # print the datetime

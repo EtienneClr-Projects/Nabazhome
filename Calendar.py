@@ -1,4 +1,5 @@
-#  Copyright (c) 2022 Etienne Clairis
+#  Copyright (c) 2022-2022 Etienne Clairis
+#
 #
 
 from __future__ import print_function
@@ -24,8 +25,12 @@ class Calendar:
         self.__service = None
         self.events = dict()
         self.last_update = None
+        self.authenticate()
 
     def authenticate(self):
+        """
+        Authenticates the user to the Google Calendar API.
+        """
         # The file token.json stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
@@ -48,6 +53,9 @@ class Calendar:
             Logger.log("Error while authenticating to Google Calendar: " + error.__str__(), False, "error")
 
     def get_events(self):
+        """
+        Gets the 10 events that are coming via Google calendar API.
+        """
         try:
             # Call the Calendar API
             now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time //todo [IMPROVEMENT] use the right datetime
@@ -65,8 +73,9 @@ class Calendar:
 
             # Prints the start and name of the next events
             for e in events:
-                start = e['start'].get('dateTime', e['start'].get('date'))
-                end = e['end'].get('dateTime', e['end'].get('date'))
+                # get the start and end time as datetime
+                start = datetime.datetime.strptime(e['start']['dateTime'], '%Y-%m-%dT%H:%M:%S%z')
+                end = datetime.datetime.strptime(e['end']['dateTime'], '%Y-%m-%dT%H:%M:%S%z')
                 event_instance = Event(start, end, e['summary'])
                 self.events[e['id']] = event_instance
             Logger.log("Events updated.", False)
@@ -97,9 +106,11 @@ class Event:
         self.start = start
         self.end = end
         self.summary = summary
+        self.isOnMorning = self.start.hour < 12  # in the morning, the first event should wake up the user
 
     def __str__(self):
-        return self.start.__str__() + "\t-->\t  " + self.end.__str__() + "\t\t" + self.summary
+        return self.start.__str__() + "\t-->\t  " + self.end.__str__() + "\t\t" + self.summary \
+               + "\ton morning\t" * self.isOnMorning + (not self.isOnMorning) * "\t" * 4
 
     def __repr__(self):
         return self.__str__()
