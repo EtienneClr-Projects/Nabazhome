@@ -3,6 +3,7 @@
 #
 #
 #
+#
 from inspect import stack
 
 
@@ -14,6 +15,8 @@ def caller_to_console_color(caller):
         return "\033[30;44m"
     elif caller == "error":  # red
         return "\033[31m"
+    elif caller == "calendar":  # yellow
+        return "\033[33m"
     else:
         return "\033[38;5;7m"
 

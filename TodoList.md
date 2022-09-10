@@ -4,6 +4,9 @@
 
 ## Features
     - La météo doit s'actualiser quand on la demande
+    - récuperer les prochains évènements de l'agenda toutes les heures
+    - 30 min avant un évènement, le rappeller à l'utilisateur
+    - Trouver le premier event de la journée, et si c'est le matin, on met une alarme pour le réveil
 
 ## Ideas
 
@@ -15,8 +18,6 @@
 
 ## Tests
 
-    - il faudrait qu'une heure avant l'alarme, on fasse un call pour obtenir la météo
-
 ## Refactoring
 
 ## Other
@@ -24,3 +25,5 @@
 ## Done
 
     - La météo ne doit pas s'actualiser en permanence
+    - il faudrait qu'une heure avant l'alarme, on fasse un call pour obtenir la météo
+
