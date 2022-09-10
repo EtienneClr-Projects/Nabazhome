@@ -6,10 +6,13 @@
 #
 #
 #
+#
 # using https://python.plainenglish.io/how-to-store-date-and-time-in-python-e951413d134
 from datetime import datetime
 
+import Animator
 import Logger
+from Config import ANIMATION_RING_ALARM
 
 
 class Alarm:
@@ -60,6 +63,7 @@ class Alarm:
         """
         # print in a blue color "RIIIIIIING"
         Logger.log("RIIIIIIING", False)
+        Animator.animate(ANIMATION_RING_ALARM)
 
         # pygame.mixer.init()
         # pygame.mixer.music.load("Alarm.mp3")

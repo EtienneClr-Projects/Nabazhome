@@ -2,13 +2,7 @@
 #
 #
 #
-#
-#
-#
-#
-#
-#
-#
+
 import time
 from datetime import datetime
 from threading import *
@@ -31,7 +25,7 @@ class UpdaterThread(Thread):
         # self.__now = None
         # self.__now_day = None
         self.__alarm = Alarm()
-        self.__alarm.set_alarm("20:44")
+        self.__alarm.set_alarm("20:44")  # todo debug only
         self.__weather = Weather(self.__lat, self.__lon, self)
 
         self.__stop = False

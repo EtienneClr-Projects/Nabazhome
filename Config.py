@@ -6,9 +6,11 @@
 #
 #
 #
+#
 
 # ANIMATIONS
 ANIMATION_START = "animation start"
+ANIMATION_RING_ALARM = "animation ring alarm"
 EARS_ANIMATION_BASIC = "ears animation basic"
 
 # VALUES
@@ -19,12 +21,3 @@ LAT = 48.0942331  # Chaumot : 48.0942331,3.2185206
 LON = 3.2185206
 
 # ELECTRONIC
-LEFT_CODER = 3
-RIGHT_CODER = 2
-RIGHT_EN = 4
-RIGHT_A = 17
-RIGHT_B = 27
-LEFT_EN = 22
-LEFT_A = 10
-LEFT_B = 9
-TOOTH_NUMBER = 34

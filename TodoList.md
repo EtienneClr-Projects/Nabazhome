@@ -3,7 +3,6 @@
 ## Bugs
 
 ## Features
-
     - La météo doit s'actualiser quand on la demande
 
 ## Ideas
