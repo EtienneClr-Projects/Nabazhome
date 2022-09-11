@@ -4,6 +4,7 @@
 #
 #
 #
+#
 
 import time
 from datetime import datetime, timedelta, timezone
@@ -58,12 +59,13 @@ class UpdaterThread(Thread):
                 """
                 Logger.log("Updating calendar...", True, "calendar")
                 self.__calendar.get_events()
-                Logger.log("NEXT EVENT : " + str(self.__calendar.next_event), False, "calendar")
-                if self.__calendar.next_event is not None \
+                next_first_event_of_the_day = self.__calendar.next_first_event_of_the_day
+                Logger.log("Next first event of the day : " + str(next_first_event_of_the_day), False, "calendar")
+                if next_first_event_of_the_day is not None \
                         and (self.__alarm.alarm_datetime is None
-                             or self.__calendar.next_event.start_time < self.__alarm.alarm_datetime) \
-                        and self.__calendar.next_event.is_on_morning:
-                    self.__alarm.set_alarm(self.__calendar.next_event.start_time)
+                             or next_first_event_of_the_day.start_time < self.__alarm.alarm_datetime) \
+                        and next_first_event_of_the_day.is_on_morning:
+                    self.__alarm.set_alarm(next_first_event_of_the_day.start_time)
                     Logger.log("alarm set to " + self.__alarm.alarm_datetime.__str__(), False, "alarm")
 
                 Logger.log("calendar updated !", True, "calendar")

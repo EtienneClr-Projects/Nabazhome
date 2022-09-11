@@ -3,20 +3,22 @@
 ## Bugs
 
 ## Features
-    - La météo doit s'actualiser quand on la demande
     - 30 min avant un évènement, le rappeller à l'utilisateur
-
 
 ## Ideas
     - Si l'utilisateur n'a pas de réveil, on lui propose de le mettre
+    - La météo doit s'actualiser quand on la demande
 
 ## Improvements
+
     - l'heure doit se mettre à jour par rapport à l'heure d'internet, et il faut l'utiliser partout du coup
+    - se débarasser du .replace(tzinfo=timezone(offset=timedelta(hours=2))) dans le code
 
 ## Documentation
 
-## Tests
+    - documenter les fonctions manquantes
 
+## Tests
     - Trouver le premier event de la journée, et si c'est le matin, on met une alarme pour le réveil
 
 ## Refactoring

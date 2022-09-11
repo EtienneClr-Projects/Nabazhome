@@ -2,6 +2,7 @@
 #
 #
 #
+#
 
 from __future__ import print_function
 
@@ -27,6 +28,7 @@ class Calendar:
         self.events = dict()
         self.last_update = None
         self.next_event = None
+        self.next_first_event_of_the_day = None
         self.current_event = None
         self.authenticate()
 
@@ -84,6 +86,7 @@ class Calendar:
 
             self.get_next_incoming_event()
             self.get_current_event()
+            self.get_next_first_event_of_the_day()
             Logger.log("Events updated.", False)
 
         except HttpError as error:
@@ -127,6 +130,28 @@ class Calendar:
                     current_event = e
             self.current_event = current_event
             return current_event
+
+    def get_next_first_event_of_the_day(self):
+        """
+        Returns the next event that is the first event of the day.
+        :return: Event
+        """
+        if len(self.events) == 0:
+            return None
+        else:
+            # find the event that is the closest to the current time and is the first event of the day
+            next_event = None
+            for e in self.events.values():
+                if e.start_time > datetime.datetime.now().replace(tzinfo=datetime.timezone(
+                        offset=datetime.timedelta(
+                            hours=2))) and e.is_on_morning:  # todo [IMPROVEMENT] use the right datetime
+                    if next_event is None:
+                        next_event = e
+                    elif e.start_time < next_event.start_time:
+                        next_event = e
+
+            self.next_first_event_of_the_day = next_event
+            return next_event
 
 
 class Event:
