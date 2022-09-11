@@ -7,8 +7,9 @@
 #
 #
 #
+#
 # using https://python.plainenglish.io/how-to-store-date-and-time-in-python-e951413d134
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 import Animator
 import Logger
@@ -17,27 +18,36 @@ from Config import ANIMATION_RING_ALARM
 
 class Alarm:
     def __init__(self):
-        self.__alarm = None
+        self.alarm_datetime = None
         self.__checked_1h_before_alarm = False
 
-    def set_alarm(self, string):
+    def set_alarm_with_string(self, string):
         """
         Only supports a single alarm which will ring everyday at the given hour
 
         :param string: HH:MM
         """
-        self.__alarm = datetime.now().replace(hour=int(string[0:2]), minute=int(string[3:5]), second=0)  # todo better
+        self.alarm_datetime = datetime.now().replace(hour=int(string[0:2]), minute=int(string[3:5]),
+                                                     second=0)  # todo better
+
+    def set_alarm(self, datetime):
+        """
+        Sets the alarm to the given datetime.
+        :param datetime:
+        """
+        self.alarm_datetime = datetime.replace(tzinfo=timezone(offset=timedelta(hours=2)))
 
     def check_alarms(self):
         """
         If the alarm is passed, delete it and returns True.
         :return: True if the alarm is after the now time.
         """
-        now = datetime.now()
+        now = datetime.now().replace(
+            tzinfo=timezone(offset=timedelta(hours=2)))  # todo [Improvement] use the right time
         # print("now = " + now.__str__() + "    alarm = " + self.alarm.__str__())
-        if self.__alarm is not None:
-            if now > self.__alarm:
-                self.__alarm = None
+        if self.alarm_datetime is not None:
+            if now > self.alarm_datetime:
+                self.alarm_datetime = None
                 return True
         return False
 
@@ -46,10 +56,11 @@ class Alarm:
         Checks if it is one hour before the alarm.
         :return: True
         """
-        now = datetime.now()
-        if self.__alarm is not None:
+        now = datetime.now().replace(
+            tzinfo=timezone(offset=timedelta(hours=2)))  # todo [Improvement] use the right time
+        if self.alarm_datetime is not None:
             if not self.__checked_1h_before_alarm:
-                one_h_before = self.__alarm.replace(hour=self.__alarm.hour - 1)
+                one_h_before = self.alarm_datetime.replace(hour=self.alarm_datetime.hour - 1)
                 if now >= one_h_before:
                     self.__checked_1h_before_alarm = True
                     return True

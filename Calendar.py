@@ -1,6 +1,7 @@
 #  Copyright (c) 2022-2022 Etienne Clairis
 #
 #
+#
 
 from __future__ import print_function
 
@@ -25,6 +26,8 @@ class Calendar:
         self.__service = None
         self.events = dict()
         self.last_update = None
+        self.next_event = None
+        self.current_event = None
         self.authenticate()
 
     def authenticate(self):
@@ -78,6 +81,9 @@ class Calendar:
                 end = datetime.datetime.strptime(e['end']['dateTime'], '%Y-%m-%dT%H:%M:%S%z')
                 event_instance = Event(start, end, e['summary'])
                 self.events[e['id']] = event_instance
+
+            self.get_next_incoming_event()
+            self.get_current_event()
             Logger.log("Events updated.", False)
 
         except HttpError as error:
@@ -85,7 +91,7 @@ class Calendar:
 
     def get_next_incoming_event(self):
         """
-        Returns the next event that is coming.
+        Returns the next event that is coming and which is not already started.
         :return: Event
         """
         if len(self.events) == 0:
@@ -94,44 +100,66 @@ class Calendar:
             # find the event that is the closest to the current time
             next_event = None
             for e in self.events.values():
-                if next_event is None:
-                    next_event = e
-                elif e.start < next_event.start:
-                    next_event = e
+                if e.start_time > datetime.datetime.now().replace(tzinfo=datetime.timezone(
+                        offset=datetime.timedelta(hours=2))):  # todo [IMPROVEMENT] use the right datetime
+                    if next_event is None:
+                        next_event = e
+                    elif e.start_time < next_event.start_time:  # search for the first event that is after the current time
+                        next_event = e
+
+            self.next_event = next_event
             return next_event
+
+    def get_current_event(self):
+        """
+        Returns the current event that is going on.
+        :return: Event
+        """
+        if len(self.events) == 0:
+            return None
+        else:
+            # find the event that is the closest to the current time
+            current_event = None
+            for e in self.events.values():
+                if current_event is None:
+                    current_event = e
+                elif e.start_time < current_event.start_time:
+                    current_event = e
+            self.current_event = current_event
+            return current_event
 
 
 class Event:
     def __init__(self, start, end, summary):
-        self.start = start
-        self.end = end
+        self.start_time = start
+        self.end_time = end
         self.summary = summary
-        self.isOnMorning = self.start.hour < 12  # in the morning, the first event should wake up the user
+        self.is_on_morning = self.start_time.hour < 12  # in the morning, the first event should wake up the user
 
     def __str__(self):
-        return self.start.__str__() + "\t-->\t  " + self.end.__str__() + "\t\t" + self.summary \
-               + "\ton morning\t" * self.isOnMorning + (not self.isOnMorning) * "\t" * 4
+        return self.start_time.__str__() + "\t-->\t  " + self.end_time.__str__() + "\t\t" + self.summary \
+               + "\ton morning\t" * self.is_on_morning + (not self.is_on_morning) * "\t" * 4
 
     def __repr__(self):
         return self.__str__()
 
     def __eq__(self, other):
-        return self.start == other.start and self.end == other.end and self.summary == other.summary
+        return self.start_time == other.start_time and self.end_time == other.end_time and self.summary == other.summary
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __lt__(self, other):
-        return self.start < other.start
+        return self.start_time < other.start_time
 
     def __le__(self, other):
-        return self.start <= other.start
+        return self.start_time <= other.start_time
 
     def __gt__(self, other):
-        return self.start > other.start
+        return self.start_time > other.start_time
 
     def __ge__(self, other):
-        return self.start >= other.start
+        return self.start_time >= other.start_time
 
 
 if __name__ == '__main__':

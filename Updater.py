@@ -3,9 +3,10 @@
 #
 #
 #
+#
 
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from threading import *
 
 import requests
@@ -20,16 +21,18 @@ from Weather import Weather
 class UpdaterThread(Thread):
     def __init__(self):
         Thread.__init__(self)
+
+        self.now = datetime.now().replace(tzinfo=timezone(offset=timedelta(hours=2)))
+        self.now_day = self.now.strftime("%A")  # todo [TEST]
+
         self.__calendar = Calendar()
-        self.do_update_weather = False
-        self.do_update_calendar = False
-        self.__next_time_to_update_calendar = datetime.now()
+        self.do_update_weather = True
+        self.do_update_calendar = True
+        self.__next_time_to_update_calendar = self.now
 
         self.__lat = LAT
         self.__lon = LON
 
-        # self.__now = None
-        # self.__now_day = None
         self.__alarm = Alarm()
         self.__weather = Weather(self.__lat, self.__lon, self)
 
@@ -49,25 +52,39 @@ class UpdaterThread(Thread):
                 self.do_update_weather = False
 
             if self.do_update_calendar:
-                Logger.log("updating calendar...", True, "calendar")
+                """
+                Updates the incoming events. If the next event is scheduled to be the first of the morning, 
+                an alarm will be set if no alarm is set at an early hour.
+                """
+                Logger.log("Updating calendar...", True, "calendar")
                 self.__calendar.get_events()
+                Logger.log("NEXT EVENT : " + str(self.__calendar.next_event), False, "calendar")
+                if self.__calendar.next_event is not None \
+                        and (self.__alarm.alarm_datetime is None
+                             or self.__calendar.next_event.start_time < self.__alarm.alarm_datetime) \
+                        and self.__calendar.next_event.is_on_morning:
+                    self.__alarm.set_alarm(self.__calendar.next_event.start_time)
+                    Logger.log("alarm set to " + self.__alarm.alarm_datetime.__str__(), False, "alarm")
+
                 Logger.log("calendar updated !", True, "calendar")
                 self.do_update_calendar = False
 
-            self.update_things()
-            time.sleep(GLOBAL_UPDATE_TIME)
-            if self.__next_time_to_update_calendar < datetime.now():  # todo use the right time
+            if self.__next_time_to_update_calendar < self.now:
                 self.do_update_calendar = True
-                self.__next_time_to_update_calendar = datetime.now().replace(second=0, microsecond=0) \
+                self.__next_time_to_update_calendar = self.now.replace(second=0, microsecond=0) \
+                                                          .replace(tzinfo=timezone(offset=timedelta(hours=2))) \
                                                       + timedelta(seconds=CALENDAR_UPDATE_TIME)
+
+            self.update_things()
             Logger.line()
+            time.sleep(GLOBAL_UPDATE_TIME)
 
     def update_things(self):
         self.is_connected_to_internet = self.check_connection()
         if self.is_connected_to_internet:
             self.update_datetime()
         if self.__alarm.check_1h_before_alarm():  # update the weather 1h before the alarm
-            Logger.log("1h before alarm", False, "alarm")
+            Logger.log("<1h before alarm", False, "alarm")
             self.do_update_weather = True
 
         if self.__alarm.check_alarms():
@@ -97,7 +114,8 @@ class UpdaterThread(Thread):
         if response.find("unavailable") != -1:
             Logger.log("worldclockAPI unavailable", True)
             return
-        self.now = datetime.strptime(response[41:57], "%Y-%m-%dT%H:%M")  # todo self.now not defined in __init__
+        self.now = datetime.strptime(response[41:57], "%Y-%m-%dT%H:%M").replace(
+            tzinfo=timezone(offset=timedelta(hours=2)))  # todo self.now not defined in __init__
         self.now_day = response[133:response.find("""\",\"timeZoneName""")]
 
         # print the datetime
