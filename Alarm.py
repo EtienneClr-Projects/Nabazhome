@@ -8,12 +8,14 @@
 #
 #
 #
+#
 # using https://python.plainenglish.io/how-to-store-date-and-time-in-python-e951413d134
 from datetime import datetime, timezone, timedelta
 
 import Animator
 import Logger
 from Config import ANIMATION_RING_ALARM
+from Notifier import Notifier
 
 
 class Alarm:
@@ -74,6 +76,7 @@ class Alarm:
         """
         # print in a blue color "RIIIIIIING"
         Logger.log("RIIIIIIING", False)
+        Notifier.notify("It's time to wake up!")
         Animator.animate(ANIMATION_RING_ALARM)
 
         # pygame.mixer.init()
@@ -81,6 +84,8 @@ class Alarm:
         # pygame.mixer.music.play()
         # while pygame.mixer.music.get_busy():
         #     pass
+
+        # pygame.mixer.music.stop()
 
     @staticmethod
     def give_infos_to_user(weather):
