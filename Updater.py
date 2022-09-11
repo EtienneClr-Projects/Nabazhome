@@ -5,6 +5,7 @@
 #
 #
 #
+#
 
 import time
 from datetime import datetime, timedelta, timezone
@@ -16,6 +17,7 @@ import Logger
 from Alarm import Alarm
 from Calendar import Calendar
 from Config import *
+from Notifier import Notifier
 from Weather import Weather
 
 
@@ -39,6 +41,8 @@ class UpdaterThread(Thread):
 
         self.__stop = False
         self.is_connected_to_internet = self.check_connection()
+        Notifier.set_notification_channel(Notifier.MessageNotifier)
+        Notifier.notify("Nabaztag started !")
 
     def run(self):
         Logger.log("updater started", True)
@@ -67,6 +71,7 @@ class UpdaterThread(Thread):
                         and next_first_event_of_the_day.is_on_morning:
                     self.__alarm.set_alarm(next_first_event_of_the_day.start_time)
                     Logger.log("alarm set to " + self.__alarm.alarm_datetime.__str__(), False, "alarm")
+                    Notifier.notify("Alarm set to " + self.__alarm.alarm_datetime.__str__())
 
                 Logger.log("calendar updated !", True, "calendar")
                 self.do_update_calendar = False
