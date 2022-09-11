@@ -7,10 +7,12 @@
 #
 #
 #
+#
+#
 
-import Animator
 import Updater
-from Config import *
+from Config.Config import ANIMATION_START
+from Physical import Animator
 
 
 class Main:

@@ -3,6 +3,7 @@
 #
 #
 #
+#
 
 from __future__ import print_function
 
@@ -39,18 +40,18 @@ class Calendar:
         # The file token.json stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        if os.path.exists('token.json'):
-            self.__creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+        if os.path.exists('Config/token.json'):
+            self.__creds = Credentials.from_authorized_user_file('Config/token.json', SCOPES)
         # If there are no (valid) credentials available, let the user log in.
         if not self.__creds or not self.__creds.valid:
             if self.__creds and self.__creds.expired and self.__creds.refresh_token:
                 self.__creds.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    'credentials.json', SCOPES)
+                    'Config/credentials.json', SCOPES)
                 self.__creds = flow.run_local_server(port=0)
             # Save the credentials for the next run
-            with open('token.json', 'w') as token:
+            with open('Config/token.json', 'w') as token:
                 token.write(self.__creds.to_json())
         try:
             self.__service = build('calendar', 'v3', credentials=self.__creds)
@@ -159,7 +160,7 @@ class Event:
         self.start_time = start
         self.end_time = end
         self.summary = summary
-        self.is_on_morning = self.start_time.hour < 12  # in the morning, the first event should wake up the user
+        self.is_on_morning = self.start_time.hour < 17  # in the morning, the first event should wake up the user
 
     def __str__(self):
         return self.start_time.__str__() + "\t-->\t  " + self.end_time.__str__() + "\t\t" + self.summary \

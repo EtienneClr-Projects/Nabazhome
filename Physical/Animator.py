@@ -3,7 +3,9 @@
 #
 #
 #
-from Config import *
+#
+#
+from Config.Config import *
 
 
 def animate_ears(animation):

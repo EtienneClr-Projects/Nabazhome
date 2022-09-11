@@ -7,6 +7,8 @@
 #
 #
 #
+#
+#
 
 import time
 from datetime import datetime, timedelta, timezone
@@ -17,7 +19,7 @@ import requests
 import Logger
 from Alarm import Alarm
 from Calendar import Calendar
-from Config import *
+from Config.Config import *
 from Notifier import Notifier
 from Weather import Weather
 
@@ -26,6 +28,7 @@ class UpdaterThread(Thread):
     def __init__(self):
         Thread.__init__(self)
 
+        self.stop_alarm_checker = False
         self.now = datetime.now().replace(tzinfo=timezone(offset=timedelta(hours=2)))
         self.now_day = self.now.strftime("%A")  # todo [TEST]
 
@@ -96,8 +99,11 @@ class UpdaterThread(Thread):
             self.do_update_weather = True
 
         if self.__alarm.check_alarms():
-            self.__alarm.ring()
+            self.__alarm.start_ringing()
             self.__alarm.give_infos_to_user(self.__weather)
+
+        if self.stop_alarm_checker:  # todo FIRST
+            self.__alarm.stop_ringing = True
 
     @staticmethod
     def check_connection():
