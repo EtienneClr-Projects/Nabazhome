@@ -1,12 +1,14 @@
 #  Copyright (c) 2022-2022 Etienne Clairis
 #
 #
+#
 import time
 from threading import Thread
 
 import serial
 
 import Logger
+import Updater
 
 
 class SerialComm(Thread):
@@ -31,6 +33,9 @@ class SerialComm(Thread):
 
             if data and data != "b''" and data != "b'STOPP'":
                 Logger.log("received data from serial: " + data, False)
+                if data == "b'BUTTON_PUSHED'":
+                    Logger.log("button pushed", True)
+                    Updater.get_instance().alarm.stop_ringing = True
             time.sleep(0.1)
 
     def stop(self):

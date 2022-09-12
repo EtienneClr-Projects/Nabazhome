@@ -10,6 +10,7 @@
 #
 #
 #
+#
 
 import time
 from datetime import datetime, timedelta, timezone
@@ -30,7 +31,6 @@ class UpdaterThread(Thread):
     def __init__(self):
         Thread.__init__(self)
 
-        self.stop_alarm_checker = False
         self.now = datetime.now().replace(tzinfo=timezone(offset=timedelta(hours=2)))
         self.now_day = self.now.strftime("%A")  # todo [TEST]
 
@@ -42,7 +42,8 @@ class UpdaterThread(Thread):
         self.__lat = LAT
         self.__lon = LON
 
-        self.__alarm = Alarm()
+        self.alarm = Alarm()
+        self.alarm.set_alarm(self.now + timedelta(minutes=1))
         self.__weather = Weather(self.__lat, self.__lon, self)
         self.__serial = get_instance()
 
@@ -55,7 +56,7 @@ class UpdaterThread(Thread):
         Logger.log("updater started", True)
 
         while not self.__stop:
-            if self.do_update_weather:
+            if self.do_update_weather and self.is_connected_to_internet:
                 Logger.log("updating weather...", True, "weather")
                 self.__weather.update()
                 Logger.log("CURRENT WEATHER : " + str(self.__weather.current_weather), False, "weather")
@@ -63,7 +64,7 @@ class UpdaterThread(Thread):
                 Logger.log("weather updated !", True, "weather")
                 self.do_update_weather = False
 
-            if self.do_update_calendar:
+            if self.do_update_calendar and self.is_connected_to_internet:
                 """
                 Updates the incoming events. If the next event is scheduled to be the first of the morning, 
                 an alarm will be set if no alarm is set at an early hour.
@@ -73,12 +74,12 @@ class UpdaterThread(Thread):
                 next_first_event_of_the_day = self.__calendar.next_first_event_of_the_day
                 Logger.log("Next first event of the day : " + str(next_first_event_of_the_day), False, "calendar")
                 if next_first_event_of_the_day is not None \
-                        and (self.__alarm.alarm_datetime is None
-                             or next_first_event_of_the_day.start_time < self.__alarm.alarm_datetime) \
+                        and (self.alarm.alarm_datetime is None
+                             or next_first_event_of_the_day.start_time < self.alarm.alarm_datetime) \
                         and next_first_event_of_the_day.is_on_morning:
-                    self.__alarm.set_alarm(next_first_event_of_the_day.start_time)
-                    Logger.log("Alarm set to " + self.__alarm.alarm_datetime.__str__(), False, "alarm")
-                    Notifier.notify("Alarm set to " + self.__alarm.alarm_datetime.__str__())
+                    self.alarm.set_alarm(next_first_event_of_the_day.start_time)
+                    Logger.log("Alarm set to " + self.alarm.alarm_datetime.__str__(), False, "alarm")
+                    Notifier.notify("Alarm set to " + self.alarm.alarm_datetime.__str__())
 
                 Logger.log("Calendar updated !", True, "calendar")
                 self.do_update_calendar = False
@@ -97,16 +98,14 @@ class UpdaterThread(Thread):
         self.is_connected_to_internet = self.check_connection()
         if self.is_connected_to_internet:
             self.update_datetime()
-        if self.__alarm.check_1h_before_alarm():  # update the weather 1h before the alarm
+        if self.alarm.check_1h_before_alarm():  # update the weather 1h before the alarm
             Logger.log("<1h before alarm", False, "alarm")
             self.do_update_weather = True
 
-        if self.__alarm.check_alarms():
-            self.__alarm.start_ringing()
-            self.__alarm.give_infos_to_user(self.__weather)
+        if self.alarm.check_alarms():
+            self.alarm.start_ringing()
+            self.alarm.give_infos_to_user(self.__weather)
 
-        if self.stop_alarm_checker:  # FIRST THING TODO
-            self.__alarm.stop_ringing = True
 
     @staticmethod
     def check_connection():
@@ -136,3 +135,10 @@ class UpdaterThread(Thread):
 
         # print the datetime
         Logger.log("NOW : " + self.now.__str__(), False)
+
+
+instance = UpdaterThread()
+
+
+def get_instance():
+    return instance

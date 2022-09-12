@@ -4,6 +4,7 @@
 #
 #
 #
+#
 
 from __future__ import print_function
 
@@ -160,7 +161,7 @@ class Event:
         self.start_time = start
         self.end_time = end
         self.summary = summary
-        self.is_on_morning = self.start_time.hour < 17  # in the morning, the first event should wake up the user
+        self.is_on_morning = self.start_time.hour < 23  # in the morning, the first event should wake up the user
 
     def __str__(self):
         return self.start_time.__str__() + "\t-->\t  " + self.end_time.__str__() + "\t\t" + self.summary \

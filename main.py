@@ -9,6 +9,7 @@
 #
 #
 #
+#
 
 import Updater
 from Config.Config import ANIMATION_START
@@ -23,7 +24,7 @@ class Main:
     def start_nabaztag():
         # Electronic.initialize_components()
         Animator.animate(ANIMATION_START)
-        updater = Updater.UpdaterThread()
+        updater = Updater.get_instance()
         updater.start()
 
 
