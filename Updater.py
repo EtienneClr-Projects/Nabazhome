@@ -9,6 +9,7 @@
 #
 #
 #
+#
 
 import time
 from datetime import datetime, timedelta, timezone
@@ -21,6 +22,7 @@ from Alarm import Alarm
 from Calendar import Calendar
 from Config.Config import *
 from Notifier import Notifier
+from SerialComm import get_instance
 from Weather import Weather
 
 
@@ -42,6 +44,7 @@ class UpdaterThread(Thread):
 
         self.__alarm = Alarm()
         self.__weather = Weather(self.__lat, self.__lon, self)
+        self.__serial = get_instance()
 
         self.__stop = False
         self.is_connected_to_internet = self.check_connection()
@@ -102,15 +105,13 @@ class UpdaterThread(Thread):
             self.__alarm.start_ringing()
             self.__alarm.give_infos_to_user(self.__weather)
 
-        if self.stop_alarm_checker:  # todo FIRST
+        if self.stop_alarm_checker:  # FIRST THING TODO
             self.__alarm.stop_ringing = True
 
     @staticmethod
     def check_connection():
-        url = "http://www.google.fr"
-        timeout = 5
         try:
-            requests.get(url, timeout=timeout)
+            requests.get(url="http://www.google.fr", timeout=5)
             return True
         except (requests.ConnectionError, requests.Timeout):
             return False
@@ -127,6 +128,7 @@ class UpdaterThread(Thread):
         # si le service n'est pas disponible
         if response.find("unavailable") != -1:
             Logger.log("worldclockAPI unavailable", True)
+            Logger.log(response, False, "error")
             return
         self.now = datetime.strptime(response[41:57], "%Y-%m-%dT%H:%M").replace(
             tzinfo=timezone(offset=timedelta(hours=2)))  # todo self.now not defined in __init__

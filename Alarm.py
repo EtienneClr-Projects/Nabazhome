@@ -11,6 +11,7 @@
 #
 #
 #
+#
 # using https://python.plainenglish.io/how-to-store-date-and-time-in-python-e951413d134
 import time
 from datetime import datetime, timezone, timedelta
@@ -90,12 +91,11 @@ class Alarm(Thread):
         Ring the alarm with the speaker. Play the sound file named Alarm.mp3
         :return: None
         """
-        # print in a blue color "RIIIIIIING"
         self.stop_ringing = False
+        Notifier.notify("It's time to wake up!")
+        Animator.animate(ANIMATION_RING_ALARM)
         while not self.stop_ringing:
             Logger.log("RIIIIIIING", False)
-            Notifier.notify("It's time to wake up!")
-            Animator.animate(ANIMATION_RING_ALARM)
 
             # pygame.mixer.init()
             # pygame.mixer.music.load("Alarm.mp3")

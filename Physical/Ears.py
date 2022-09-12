@@ -1,6 +1,9 @@
 #  Copyright (c) 2022-2022 Etienne Clairis
 #
 #
+#
+#
+#
 # import Motors
 # import threading
 # import time
@@ -53,3 +56,11 @@
 #
 #     Motors.init_motors()
 #     Motors.turn_motors(True, True)
+import Logger
+from SerialComm import get_instance
+
+
+def turn_ears(ear_left_loops, ear_right_loops, synchronized):
+    Logger.log("turning ears" + str(ear_left_loops * 10 + ear_right_loops), True, "error")
+    s = get_instance()
+    s.send(str(10 * ear_left_loops + ear_right_loops).encode())
