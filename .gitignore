@@ -1,1 +1,7 @@
 /Config/credentials.json
+/data/
+*.db
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd

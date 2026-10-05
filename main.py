@@ -1,33 +1,17 @@
-#  Copyright (c) 2022-2022 Etienne Clairis
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
+from __future__ import annotations
 
-import Updater
-from Config.Config import ANIMATION_START
-from Physical import Animator
+import uvicorn
+
+from nabazhome_luckfox.api.app import create_app
+from nabazhome_luckfox.config.settings import Settings
 
 
-class Main:
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def start_nabaztag():
-        # Electronic.initialize_components()
-        Animator.animate(ANIMATION_START)
-        updater = Updater.get_instance()
-        updater.start()
+def main() -> None:
+    settings = Settings.from_env()
+    app = create_app(settings)
+    print(f"{settings.app_name} booting on {settings.web_host}:{settings.web_port}")
+    uvicorn.run(app, host=settings.web_host, port=settings.web_port, log_level="info")
 
 
-if __name__ == '__main__':
-    main = Main()
-    main.start_nabaztag()
+if __name__ == "__main__":
+    main()
