@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nabaztag Dashboard</title>
+    <link rel="stylesheet" href="/static/toy.css" />
+    <style>
+      :root {
+        --bg: #120f1d;
+        --panel: rgba(28, 23, 40, 0.95);
+        --panel-alt: rgba(38, 31, 55, 0.95);
+        --accent: #ffb703;
+        --accent-2: #fb8500;
+        --pink: #ff7eb6;
+        --cyan: #7dd3fc;
+        --text: #f8f5ff;
+        --muted: #d2c7e8;
+        --green: #77dd77;
+        --red: #ff6b6b;
+        --shadow: rgba(0, 0, 0, 0.28);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", Tahoma, sans-serif;
+        background:
+          radial-gradient(circle at top, rgba(255, 184, 0, 0.2), transparent 18%),
+          linear-gradient(135deg, #120f1d 0%, #1e1630 52%, #151426 100%);
+        color: var(--text);
+        padding: 32px 18px 40px;
+      }
+
+      .shell {
+        max-width: 1180px;
+        margin: 0 auto;
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2rem, 3vw, 3rem);
+        letter-spacing: 0.04em;
+      }
+
+      .status-pill {
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(119, 221, 119, 0.14);
+        border: 1px solid rgba(119, 221, 119, 0.5);
+        color: #dfffe3;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 0.72rem;
+      }
+
+      .dashboard {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .card {
+        background: linear-gradient(180deg, rgba(31, 25, 44, 0.95), rgba(21, 18, 30, 0.95));
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        box-shadow: 0 24px 55px var(--shadow);
+        padding: 20px;
+      }
+
+      .span-4 { grid-column: span 4; }
+      .span-5 { grid-column: span 5; }
+      .span-6 { grid-column: span 6; }
+      .span-7 { grid-column: span 7; }
+      .span-8 { grid-column: span 8; }
+      .span-12 { grid-column: span 12; }
+
+      .card h2 {
+        margin: 0 0 16px;
+        font-size: 0.9rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .device-hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+      }
+
+      .device-mode {
+        font-size: 1.5rem;
+        font-weight: 800;
+        text-transform: capitalize;
+      }
+
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .metric {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 14px;
+        padding: 12px 14px;
+      }
+
+      .metric-label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+
+      .metric-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+      }
+
+      .weather-main {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+
+      .weather-temp {
+        font-size: 2.5rem;
+        font-weight: 800;
+        letter-spacing: -0.05em;
+      }
+
+      .weather-icon {
+        font-size: 2.8rem;
+      }
+
+      .weather-detail {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255,255,255,0.08);
+        color: var(--muted);
+      }
+
+      .alarm-box {
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        padding: 18px 18px 20px;
+      }
+
+      .alarm-box h2 {
+        margin: 0;
+        font-size: 2.15rem;
+        letter-spacing: 0.04em;
+        color: #dfe8ff;
+        font-weight: 800;
+      }
+
+      .alarm-empty {
+        color: #e8ebff;
+        margin: 0;
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+
+      .alarm-value-copy {
+        color: #d5dafb;
+        margin-top: -6px;
+      }
+
+      .alarm-controls {
+        display: block;
+      }
+
+      .selector-panel {
+        position: relative;
+        min-height: 350px;
+        border-radius: 20px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+        border: 1px solid rgba(255,255,255,0.08);
+        overflow: hidden;
+      }
+
+      .selector-panel::before,
+      .selector-panel::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 18px;
+      }
+
+      .selector-panel::before {
+        background: linear-gradient(135deg, rgba(255,255,255,0.04), transparent 58%);
+      }
+
+      .ring {
+        position: absolute;
+        border-radius: 50%;
+        right: 15px;
+        bottom: 15px;
+        transform: translate(50%, 50%);
+        cursor: grab;
+        user-select: none;
+        -webkit-user-select: none;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);
+      }
+
+      .ring-ok {
+        position: absolute;
+        right: -25px;
+        bottom: -25px;
+        width: 115px;
+        height: 115px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(255, 183, 3, 0.96), rgba(251, 133, 0, 0.9));
+        color: rgba(26, 16, 10, 0.96);
+        font-size: 1.7rem;
+        font-weight: 800;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 18px 28px rgba(251, 133, 0, 0.22);
+        z-index: 4;
+        cursor: pointer;
+      }
+
+      .ring-ok span {
+        display: block;
+        transform: translateY(-1px);
+      }
+
+      .ring:active {
+        cursor: grabbing;
+      }
+
+      .dial-container {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        border-radius: 50%;
+      }
+
+      .tick-wrap {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        border-radius: 50%;
+      }
+
+      .tick {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        color: rgba(255,255,255,0.7);
+        font-weight: 400;
+        font-size: 16px;
+        transition: color 0.3s ease, font-size 0.3s ease, text-shadow 0.3s ease;
+      }
+
+      .tick-wrap.active .tick {
+        color: #ffffff;
+        font-size: 32px;
+        font-weight: 500;
+        text-shadow: 0 0 12px rgba(255,255,255,0.7);
+      }
+
+      .ring-hours {
+        width: 620px;
+        height: 620px;
+        background: linear-gradient(135deg, rgba(122, 102, 168, 0.88), rgba(55, 46, 79, 0.9));
+        box-shadow: inset 15px 15px 30px rgba(255,255,255,0.08), inset -8px -8px 20px rgba(18, 15, 29, 0.44);
+        z-index: 1;
+      }
+
+      .ring-hours .tick { top: 25px; }
+      .ring-hours .tick-wrap.active .tick { top: 15px; }
+
+      .ring-minutes {
+        width: 455px;
+        height: 455px;
+        background: linear-gradient(135deg, rgba(118, 150, 255, 0.78), rgba(72, 101, 182, 0.84));
+        box-shadow: inset 12px 12px 26px rgba(255,255,255,0.08), inset -6px -6px 16px rgba(18, 22, 41, 0.34);
+        z-index: 2;
+      }
+
+      .ring-minutes .tick { top: 20px; font-size: 15px; }
+      .ring-minutes .tick-wrap.active .tick { top: 10px; font-size: 30px; }
+
+      .ring-ampm {
+        width: 290px;
+        height: 290px;
+        background: linear-gradient(135deg, rgba(255, 192, 83, 0.85), rgba(255, 143, 60, 0.82));
+        box-shadow: inset 10px 10px 20px rgba(255,255,255,0.12), inset -5px -5px 15px rgba(95, 49, 13, 0.22);
+        z-index: 3;
+      }
+
+      .ring-ampm .tick { top: 20px; font-size: 14px; letter-spacing: 1px; }
+      .ring-ampm .tick-wrap.active .tick { top: 12px; font-size: 24px; }
+
+      .time-display {
+        position: absolute;
+        left: 22px;
+        top: 20px;
+        width: auto;
+        height: auto;
+        border-radius: 0;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        z-index: 4;
+        color: rgba(130, 146, 215, 0.95);
+        font-weight: 800;
+        letter-spacing: -0.06em;
+      }
+
+      .time-display .main-value {
+        font-size: clamp(2.3rem, 2.4vw, 3rem);
+        line-height: 1;
+      }
+
+      .time-display .meridian {
+        margin-top: 8px;
+        font-size: 0.72rem;
+        letter-spacing: 0.18em;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: rgba(130, 146, 215, 0.95);
+      }
+
+      button {
+        border: none;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 120ms ease, filter 120ms ease;
+      }
+
+      button:hover { transform: translateY(-1px); filter: brightness(1.06); }
+
+      .primary-btn {
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        color: #171312;
+      }
+
+      .secondary-btn {
+        background: rgba(125, 211, 252, 0.12);
+        color: var(--text);
+        border: 1px solid rgba(125,211,252,0.28);
+      }
+
+      .action-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .calendar-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .calendar-item {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 12px;
+        padding: 12px 14px;
+      }
+
+      .calendar-item strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .animation-panel {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        padding: 20px 22px 24px;
+      }
+
+      .animation-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .animation-header h2 {
+        margin: 0;
+      }
+
+      .animation-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .animation-actions button {
+        min-width: 120px;
+      }
+
+      .tiny {
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      .status-online { border-color: rgba(119,221,119,0.65); background: rgba(119,221,119,0.12); }
+      .status-alerting { border-color: rgba(255,107,107,0.65); background: rgba(255,107,107,0.12); }
+      .status-booting { border-color: rgba(255,183,3,0.65); background: rgba(255,183,3,0.12); }
+
+      @media (max-width: 800px) {
+        .span-4, .span-5, .span-6, .span-7, .span-8, .span-12 { grid-column: span 12; }
+        header { flex-direction: column; align-items: flex-start; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <div class="brand">
+          <div class="nabaztag-container" aria-hidden="true">
+            <div class="ear left"></div>
+            <div class="ear right"></div>
+            <div class="body">
+              <div class="sensor"></div>
+              <div class="eye left"></div>
+              <div class="eye right"></div>
+              <div class="nose-h"></div>
+              <div class="nose-v"></div>
+              <div class="cheek left"></div>
+              <div class="cheek center"></div>
+              <div class="cheek right"></div>
+              <div class="dial"></div>
+            </div>
+            <div class="base-plate"></div>
+          </div>
+          <h1>Nabaztag</h1>
+        </div>
+        <div id="device-pill" class="status-pill">ready</div>
+      </header>
+
+      <main class="dashboard">
+        <section class="card span-4 status-online" id="status-card">
+          <h2>Device</h2>
+          <div class="device-hero">
+            <div class="device-mode" id="device-mode">ready</div>
+            <div class="tiny" id="device-online">online</div>
+          </div>
+          <div class="metric-grid">
+            <div class="metric">
+              <span class="metric-label">status</span>
+              <span class="metric-value" id="status-value">ready</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">last sync</span>
+              <span class="metric-value" id="sync-value">-</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">requested</span>
+              <span class="metric-value" id="requested-value">ready</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">mode</span>
+              <span class="metric-value" id="mode-value">ready</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="card span-4">
+          <h2>Weather</h2>
+          <div class="weather-main">
+            <div class="weather-temp" id="weather-temp">--°</div>
+            <div class="weather-icon" id="weather-icon">☁️</div>
+          </div>
+          <div class="tiny" id="weather-condition">ready</div>
+          <div class="weather-detail">
+            <span>Feels like <strong id="feels-like">--°</strong></span>
+            <span>Rain <strong id="rain-prob">--%</strong></span>
+          </div>
+        </section>
+
+        <section class="card span-4 alarm-box">
+          <h2>Alarm</h2>
+
+          <div id="alarm-empty" class="alarm-empty">No wake-up alarm set yet.</div>
+          <div id="alarm-value" class="tiny alarm-value-copy"></div>
+
+          <div class="alarm-controls">
+            <div class="selector-panel" aria-label="Wake-up time selector">
+              <div class="ring ring-hours" id="hours-ring"><div class="dial-container"></div></div>
+              <div class="ring ring-minutes" id="minutes-ring"><div class="dial-container"></div></div>
+              <div class="ring ring-ampm" id="ampm-ring"><div class="dial-container"></div></div>
+
+              <div class="time-display" id="time-display">
+                <div class="main-value">11:40</div>
+                <div class="meridian">AM</div>
+              </div>
+
+              <button id="set-alarm" class="ring-ok" type="button" aria-label="Set wake-up alarm"><span>OK</span></button>
+            </div>
+          </div>
+
+          <input id="alarm-input" type="hidden" value="11:40" />
+        </section>
+
+        <section class="card span-8">
+          <h2>Quick actions</h2>
+          <div class="action-row">
+            <button id="set-online" class="secondary-btn">Online</button>
+            <button id="set-alert" class="secondary-btn">Alert</button>
+            <button id="refresh-data" class="secondary-btn">Refresh</button>
+          </div>
+          <div id="toast" class="tiny" style="margin-top: 14px; color: var(--cyan); min-height: 20px;"></div>
+        </section>
+
+        <section class="card span-4">
+          <h2>Calendar</h2>
+          <ul id="calendar-list" class="calendar-list">
+            <li class="calendar-item"><strong>Loading...</strong></li>
+          </ul>
+        </section>
+
+        <section class="card animation-panel" aria-label="Animations panel">
+          <div class="animation-header">
+            <h2>Animations</h2>
+            <div class="animation-actions">
+              <button class="secondary-btn" data-anim="right-ear" type="button">Right ear (1 turn)</button>
+              <button class="secondary-btn" data-anim="left-ear" type="button">Left ear (1 turn)</button>
+              <button class="secondary-btn" data-anim="both-ears" type="button">Both ears (1 turn)</button>
+              <button class="secondary-btn" data-anim="home-ears" type="button">Home ears</button>
+              <button class="secondary-btn" data-anim="led-green" type="button">LEDs green</button>
+              <button class="secondary-btn" data-anim="led-red" type="button">LEDs red</button>
+              <button class="secondary-btn" data-anim="led-orange" type="button">LEDs orange</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const statusCard = document.getElementById('status-card');
+      const statusPill = document.getElementById('device-pill');
+      const toast = document.getElementById('toast');
+
+      function showToast(message) {
+        toast.textContent = message;
+        setTimeout(() => { toast.textContent = ''; }, 2500);
+      }
+
+      function renderStatus(data) {
+        const device = data.device || {};
+        const value = device.status || 'unknown';
+        document.getElementById('status-value').textContent = value;
+        document.getElementById('sync-value').textContent = device.last_sync ? new Date(device.last_sync).toLocaleString() : '—';
+        document.getElementById('requested-value').textContent = device.requested_status || '—';
+        document.getElementById('mode-value').textContent = value;
+        document.getElementById('device-mode').textContent = value;
+        document.getElementById('device-online').textContent = device.online ? 'online' : 'offline';
+
+        statusPill.textContent = value;
+        statusPill.classList.remove('status-online', 'status-alerting', 'status-booting');
+        if (value === 'alerting') {
+          statusCard.classList.add('status-alerting');
+          statusPill.classList.add('status-alerting');
+        } else if (value === 'booting') {
+          statusCard.classList.add('status-booting');
+          statusPill.classList.add('status-booting');
+        } else {
+          statusCard.classList.add('status-online');
+          statusPill.classList.add('status-online');
+        }
+      }
+
+      function renderWeather(data) {
+        const weather = data.weather || {};
+        const temp = weather.temperature_c != null ? `${Math.round(weather.temperature_c)}°` : '--°';
+        const feels = weather.feels_like_c != null ? `${Math.round(weather.feels_like_c)}°` : '--°';
+        const rain = weather.precipitation_probability != null ? `${Math.round(weather.precipitation_probability)}%` : '--%';
+
+        document.getElementById('weather-temp').textContent = temp;
+        document.getElementById('weather-condition').textContent = weather.condition || 'offline';
+        document.getElementById('feels-like').textContent = feels;
+        document.getElementById('rain-prob').textContent = rain;
+
+        const iconMap = {
+          'clear': '☀️',
+          'clouds': '☁️',
+          'rain': '🌧️',
+          'snow': '❄️',
+          'mist': '🌫️',
+          'thunderstorm': '⛈️',
+          'offline': '📡'
+        };
+        document.getElementById('weather-icon').textContent = iconMap[weather.condition] || '🌤️';
+      }
+
+      function getWrappedValue(val, max, min = 0) {
+        const range = max - min + 1;
+        return ((val - min) % range + range) % range + min;
+      }
+
+      function applyDialState(dial, hour, minute, meridian) {
+        const hour12 = hour % 12 || 12;
+        dial.hours.activeV = hour12;
+        dial.minutes.activeV = minute;
+        dial.ampm.activeV = meridian === 'PM' ? 1 : 0;
+
+        dial.hours.R = -45 - (dial.hours.activeV * dial.hours.spacing);
+        dial.minutes.R = -45 - (dial.minutes.activeV * dial.minutes.spacing);
+        dial.ampm.R = -45 - (dial.ampm.activeV * dial.ampm.spacing);
+      }
+
+      const dials = {
+        hours: { id: 'hours-ring', min: 1, max: 12, spacing: 15, activeV: 11, R: -45 - (11 * 15), isAmPm: false },
+        minutes: { id: 'minutes-ring', min: 0, max: 59, spacing: 15, activeV: 40, R: -45 - (40 * 15), isAmPm: false },
+        ampm: { id: 'ampm-ring', min: 0, max: 1, spacing: 30, activeV: 0, R: -45 - (0 * 30), isAmPm: true }
+      };
+
+      function updateDial(config) {
+        const container = document.querySelector(`#${config.id} .dial-container`);
+        container.style.transform = `rotate(${config.R}deg)`;
+
+        const exactV = (-45 - config.R) / config.spacing;
+        const activeV = Math.round(exactV);
+        config.activeV = activeV;
+
+        container.innerHTML = '';
+
+        const range = config.isAmPm ? 1 : 6;
+        const startV = config.isAmPm ? 0 : activeV - range;
+        const endV = config.isAmPm ? 1 : activeV + range;
+
+        for (let v = startV; v <= endV; v++) {
+          let displayVal;
+          if (config.isAmPm) {
+            displayVal = v === 0 ? 'AM' : 'PM';
+          } else {
+            displayVal = getWrappedValue(v, config.max, config.min);
+            if (config.max === 59 && displayVal < 10) displayVal = `0${displayVal}`;
+          }
+
+          const wrap = document.createElement('div');
+          wrap.className = `tick-wrap ${v === activeV ? 'active' : ''}`;
+          wrap.style.transform = `rotate(${v * config.spacing}deg)`;
+
+          const tick = document.createElement('div');
+          tick.className = 'tick';
+          tick.textContent = displayVal;
+
+          wrap.appendChild(tick);
+          container.appendChild(wrap);
+        }
+      }
+
+      function updateTimeDisplay() {
+        const hours = getWrappedValue(dials.hours.activeV, 12, 1);
+        const minutes = getWrappedValue(dials.minutes.activeV, 59, 0);
+        const meridian = dials.ampm.activeV === 0 ? 'AM' : 'PM';
+
+        const timeDisplay = document.getElementById('time-display');
+        const mainValue = timeDisplay.querySelector('.main-value');
+        const meridianValue = timeDisplay.querySelector('.meridian');
+
+        mainValue.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        meridianValue.textContent = meridian;
+
+        const hour24 = meridian === 'PM' && hours < 12 ? hours + 12 : (meridian === 'AM' && hours === 12 ? 0 : hours);
+        document.getElementById('alarm-input').value = `${String(hour24).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+      }
+
+      function formatAlarmTime(dateString) {
+        if (!dateString) return '--:--';
+        const date = new Date(dateString);
+        if (Number.isNaN(date.getTime())) return '--:--';
+
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
+      }
+
+      function renderAlarm(data) {
+        const alarms = data.alarms || [];
+        const alarmBox = document.getElementById('alarm-empty');
+        const alarmValue = document.getElementById('alarm-value');
+
+        if (!alarms.length) {
+          alarmBox.textContent = 'No wake-up alarm set yet.';
+          alarmValue.textContent = 'Pick a time to start your morning routine.';
+          return;
+        }
+
+        const alarm = alarms[0];
+        const date = alarm.trigger_at ? new Date(alarm.trigger_at) : null;
+
+        if (date && !Number.isNaN(date.getTime())) {
+          const hours = date.getHours();
+          const minutes = date.getMinutes();
+          const meridian = hours >= 12 ? 'PM' : 'AM';
+          const hour12 = hours % 12 || 12;
+
+          applyDialState(dials, hours, minutes, meridian);
+          Object.values(dials).forEach((dial) => updateDial(dial));
+          updateTimeDisplay();
+
+          const mainValue = document.getElementById('time-display').querySelector('.main-value');
+          const meridianValue = document.getElementById('time-display').querySelector('.meridian');
+          mainValue.textContent = `${String(hour12).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+          meridianValue.textContent = meridian;
+        }
+
+        alarmBox.textContent = alarm.name || 'Wake-up alarm';
+        alarmValue.textContent = alarm.trigger_at ? `Next wake-up: ${new Date(alarm.trigger_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'No time';
+      }
+
+      function setupInteraction(config) {
+        const ring = document.getElementById(config.id);
+        let isDragging = false;
+        let prevAngle = 0;
+
+        function getAngle(e) {
+          const rect = ring.getBoundingClientRect();
+          const cx = rect.left + rect.width / 2;
+          const cy = rect.top + rect.height / 2;
+          const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+          const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+          return Math.atan2(clientY - cy, clientX - cx) * 180 / Math.PI;
+        }
+
+        function onStart(e) {
+          isDragging = true;
+          prevAngle = getAngle(e);
+          document.querySelector(`#${config.id} .dial-container`).style.transition = 'none';
+        }
+
+        function onMove(e) {
+          if (!isDragging) return;
+          e.preventDefault();
+
+          const currentAngle = getAngle(e);
+          let delta = currentAngle - prevAngle;
+
+          if (delta > 180) delta -= 360;
+          if (delta < -180) delta += 360;
+
+          config.R += delta;
+
+          if (config.isAmPm) {
+            if (config.R > -45) config.R = -45;
+            if (config.R < -75) config.R = -75;
+          }
+
+          prevAngle = currentAngle;
+          updateDial(config);
+          updateTimeDisplay();
+        }
+
+        function onEnd() {
+          if (!isDragging) return;
+          isDragging = false;
+          config.R = -45 - config.activeV * config.spacing;
+          const container = document.querySelector(`#${config.id} .dial-container`);
+          container.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
+          updateDial(config);
+          updateTimeDisplay();
+        }
+
+        ring.addEventListener('mousedown', onStart);
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onEnd);
+
+        ring.addEventListener('touchstart', onStart, { passive: false });
+        window.addEventListener('touchmove', onMove, { passive: false });
+        window.addEventListener('touchend', onEnd);
+      }
+
+      function renderCalendar(data) {
+        const events = (data.calendar && data.calendar.events) || [];
+        const list = document.getElementById('calendar-list');
+
+        if (!events.length) {
+          list.innerHTML = '<li class="calendar-item"><strong>No upcoming events</strong><div class="tiny">Calendar is quiet for now.</div></li>';
+          return;
+        }
+
+        list.innerHTML = events.slice(0, 3).map((event) => {
+          const start = event.start_time ? new Date(event.start_time).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Time TBD';
+          return `
+            <li class="calendar-item">
+              <strong>${event.summary || 'Event'}</strong>
+              <div class="tiny">${start}</div>
+            </li>
+          `;
+        }).join('');
+      }
+
+      function triggerAnimation(animationName) {
+        const stage = document.getElementById('animation-stage');
+        if (!stage) return;
+        stage.dataset.animation = animationName;
+      }
+
+      document.querySelectorAll('[data-anim]').forEach((button) => {
+        button.addEventListener('click', async () => {
+          const name = button.dataset.anim;
+          try {
+            const response = await fetch('/api/animation', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: new URLSearchParams({ action: name })
+            });
+            const payload = await response.json();
+            showToast(payload.message || button.textContent.trim());
+            triggerAnimation(name);
+          } catch (error) {
+            showToast('Animation command failed');
+          }
+        });
+      });
+
+      async function loadDashboard() {
+        const response = await fetch('/api/dashboard');
+        const data = await response.json();
+        renderStatus(data);
+        renderWeather(data);
+        renderAlarm(data);
+        renderCalendar(data);
+      }
+
+      document.getElementById('set-alarm').addEventListener('click', async () => {
+        const value = document.getElementById('alarm-input').value;
+        if (!value) {
+          showToast('Choose a wake-up time first');
+          return;
+        }
+
+        const trigger = new Date();
+        const [hours, minutes] = value.split(':').map(Number);
+        trigger.setHours(hours, minutes, 0, 0);
+
+        const response = await fetch(`/alarms?trigger_at=${encodeURIComponent(trigger.toISOString())}&name=Wake-up`, { method: 'POST' });
+        const data = await response.json();
+        showToast(`Alarm set for ${new Date(data.trigger_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+        await loadDashboard();
+      });
+
+      Object.values(dials).forEach((dial) => {
+        updateDial(dial);
+      });
+      setupInteraction(dials.hours);
+      setupInteraction(dials.minutes);
+      setupInteraction(dials.ampm);
+      updateTimeDisplay();
+
+      document.getElementById('set-online').addEventListener('click', async () => {
+        await fetch('/status?status=ready', { method: 'POST' });
+        showToast('Status updated');
+        await loadDashboard();
+      });
+
+      document.getElementById('set-alert').addEventListener('click', async () => {
+        await fetch('/notifications?message=Wake%20up&channel=local', { method: 'POST' });
+        deviceServiceStatus = await fetch('/status?status=alerting', { method: 'POST' });
+        showToast('Alert triggered');
+        triggerAnimation('blast');
+        await loadDashboard();
+      });
+
+      document.getElementById('refresh-data').addEventListener('click', async () => {
+        showToast('Refreshing data');
+        await loadDashboard();
+      });
+
+      triggerAnimation('home-ears');
+      loadDashboard();
+      setInterval(loadDashboard, 15000);
+    </script>
+  </body>
+</html>
