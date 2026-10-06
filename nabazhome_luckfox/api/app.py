@@ -83,20 +83,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         device = device_service.get_status()
         weather = weather_service.fetch_snapshot()
         active_alarm = alarm_service.get_active_alarm()
+        ringing = bool(active_alarm is not None and active_alarm.enabled and alarm_service.is_due(active_alarm))
         alarms = []
-        if active_alarm is not None:
+        if active_alarm is not None and active_alarm.enabled:
             alarms = [{
                 "id": active_alarm.id,
                 "name": active_alarm.name,
                 "trigger_at": active_alarm.trigger_at.isoformat() if active_alarm.trigger_at else None,
+                "enabled": active_alarm.enabled,
             }]
 
         events = calendar_service.refresh()
         return {
             "device": {
                 "online": device.online,
-                "status": device.status,
-                "requested_status": device.status,
+                "status": device_service.get_status().status,
+                "requested_status": device_service.get_status().status,
                 "last_sync": device.last_sync.isoformat() if device.last_sync else None,
             },
             "weather": {
@@ -106,6 +108,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "precipitation_probability": weather.precipitation_probability,
             },
             "alarms": alarms,
+            "ringing": ringing,
             "calendar": {
                 "events": [
                     {
@@ -122,15 +125,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/alarms")
     def get_alarms() -> dict[str, Any]:
         active_alarm = alarm_service.get_active_alarm()
-        if active_alarm is None:
+        if active_alarm is None or not active_alarm.enabled:
             return {"alarms": []}
-        return {"alarms": [{"id": active_alarm.id, "name": active_alarm.name, "trigger_at": active_alarm.trigger_at.isoformat() if active_alarm.trigger_at else None}]}
+        return {"alarms": [{"id": active_alarm.id, "name": active_alarm.name, "trigger_at": active_alarm.trigger_at.isoformat() if active_alarm.trigger_at else None, "enabled": active_alarm.enabled}]}
 
     @app.post("/alarms")
     def create_alarm(trigger_at: str, name: str = "wake") -> dict[str, Any]:
         parsed = datetime.fromisoformat(trigger_at)
         alarm = alarm_service.set_alarm(parsed, name=name)
-        return {"id": alarm.id, "name": alarm.name, "trigger_at": alarm.trigger_at.isoformat() if alarm.trigger_at else None}
+        return {"id": alarm.id, "name": alarm.name, "trigger_at": alarm.trigger_at.isoformat() if alarm.trigger_at else None, "enabled": alarm.enabled}
+
+    @app.post("/alarms/disable")
+    def disable_alarm() -> dict[str, Any]:
+        disabled = alarm_service.disable_alarm()
+        return {"disabled": disabled, "alarms": []}
+
+    @app.delete("/alarms")
+    def delete_alarm() -> dict[str, Any]:
+        return disable_alarm()
 
     @app.get("/weather")
     def get_weather() -> dict[str, Any]:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from nabazhome_luckfox.domain.alarm import AlarmSchedule
 from nabazhome_luckfox.infrastructure.database import DatabaseManager
@@ -39,6 +39,8 @@ class AlarmRepository:
         for row in rows:
             trigger_ts = row["trigger_at"]
             parsed_trigger = datetime.fromisoformat(trigger_ts) if trigger_ts else None
+            if parsed_trigger is not None and parsed_trigger.tzinfo is not None:
+                parsed_trigger = parsed_trigger.astimezone(timezone.utc).replace(tzinfo=None)
             alarms.append(
                 AlarmSchedule(
                     id=row["id"],

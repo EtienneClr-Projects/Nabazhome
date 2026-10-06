@@ -46,6 +46,30 @@ class AlarmServiceTests(unittest.TestCase):
 
         database.close()
 
+    def test_alarm_persists_after_restart(self):
+        db_path = Path(tempfile.mkdtemp()) / 'restart-alarm.db'
+        first_db = DatabaseManager(db_path)
+        first_service = AlarmService(database=first_db)
+        alarm_time = datetime(2026, 10, 5, 9, 30, 0)
+
+        first_service.set_alarm(alarm_time, name='Wake-up')
+        first_db.close()
+
+        reopened = AlarmService(database=DatabaseManager(db_path))
+        reloaded = reopened.get_active_alarm()
+
+        self.assertIsNotNone(reloaded)
+        self.assertEqual(reloaded.name, 'Wake-up')
+        self.assertEqual(reloaded.trigger_at, alarm_time)
+        self.assertTrue(reloaded.enabled)
+
+    def test_disabled_alarm_is_not_due(self):
+        service = AlarmService()
+        now = datetime(2026, 10, 5, 8, 0, 0)
+        alarm = AlarmSchedule(trigger_at=now - timedelta(minutes=5), enabled=False)
+
+        self.assertFalse(service.is_due(alarm, now))
+
 
 if __name__ == "__main__":
     unittest.main()

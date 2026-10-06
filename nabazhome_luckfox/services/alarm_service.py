@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from nabazhome_luckfox.domain.alarm import AlarmSchedule
 from nabazhome_luckfox.infrastructure.database import DatabaseManager
@@ -9,6 +9,12 @@ from nabazhome_luckfox.repositories.alarm_repository import AlarmRepository
 
 class AlarmService:
     """Business logic for alarm management."""
+
+    @staticmethod
+    def _normalize_datetime(value: datetime) -> datetime:
+        if value.tzinfo is not None:
+            value = value.astimezone(timezone.utc)
+        return value.replace(tzinfo=None)
 
     def __init__(self, database: DatabaseManager | None = None) -> None:
         self.database = database
@@ -36,10 +42,11 @@ class AlarmService:
         return alarms
 
     def set_alarm(self, trigger_at: datetime, name: str = "wake") -> AlarmSchedule:
+        normalized = self._normalize_datetime(trigger_at)
         alarm = AlarmSchedule(
-            id=f"alarm-{trigger_at.strftime('%Y%m%d%H%M%S')}",
+            id=f"alarm-{normalized.strftime('%Y%m%d%H%M%S')}",
             name=name,
-            trigger_at=trigger_at,
+            trigger_at=normalized,
             enabled=True,
             recurring=True,
         )
@@ -54,19 +61,41 @@ class AlarmService:
             for alarm in self.repository.list_all():
                 self.repository.delete(alarm.id)
 
+    def disable_alarm(self) -> bool:
+        alarm = self.get_active_alarm()
+        if alarm is None:
+            return False
+        alarm.enabled = False
+        self.current_alarm = alarm
+        if self.repository is not None:
+            self.repository.save(alarm)
+        return True
+
+    def enable_alarm(self) -> bool:
+        alarm = self.get_active_alarm()
+        if alarm is None:
+            return False
+        alarm.enabled = True
+        self.current_alarm = alarm
+        if self.repository is not None:
+            self.repository.save(alarm)
+        return True
+
     def is_due(self, alarm: AlarmSchedule | None = None, now: datetime | None = None) -> bool:
         target = alarm or self.get_active_alarm()
-        if target is None or target.trigger_at is None:
+        if target is None or not target.enabled or target.trigger_at is None:
             return False
 
-        current_time = now or datetime.utcnow()
-        return current_time >= target.trigger_at
+        current_time = self._normalize_datetime(now or datetime.now(timezone.utc).replace(tzinfo=None))
+        trigger_time = self._normalize_datetime(target.trigger_at)
+        return current_time >= trigger_time
 
     def should_warn_one_hour_before(self, alarm: AlarmSchedule | None = None, now: datetime | None = None) -> bool:
         target = alarm or self.get_active_alarm()
-        if target is None or target.trigger_at is None:
+        if target is None or not target.enabled or target.trigger_at is None:
             return False
 
-        current_time = now or datetime.utcnow()
-        warning_time = target.trigger_at.replace(hour=target.trigger_at.hour - 1) if target.trigger_at.hour >= 1 else target.trigger_at
+        current_time = self._normalize_datetime(now or datetime.now(timezone.utc).replace(tzinfo=None))
+        trigger_time = self._normalize_datetime(target.trigger_at)
+        warning_time = trigger_time.replace(hour=trigger_time.hour - 1) if trigger_time.hour >= 1 else trigger_time
         return current_time >= warning_time

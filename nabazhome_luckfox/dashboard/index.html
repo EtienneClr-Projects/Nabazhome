@@ -525,6 +525,7 @@
           <div id="alarm-value" class="tiny alarm-value-copy"></div>
 
           <div class="alarm-controls">
+            <button id="disable-alarm" class="secondary-btn" type="button" style="margin-bottom: 12px;">Disable alarm</button>
             <div class="selector-panel" aria-label="Wake-up time selector">
               <div class="ring ring-hours" id="hours-ring"><div class="dial-container"></div></div>
               <div class="ring ring-minutes" id="minutes-ring"><div class="dial-container"></div></div>
@@ -720,10 +721,12 @@
         const alarms = data.alarms || [];
         const alarmBox = document.getElementById('alarm-empty');
         const alarmValue = document.getElementById('alarm-value');
+        const disableButton = document.getElementById('disable-alarm');
 
         if (!alarms.length) {
           alarmBox.textContent = 'No wake-up alarm set yet.';
           alarmValue.textContent = 'Pick a time to start your morning routine.';
+          disableButton.disabled = true;
           return;
         }
 
@@ -748,6 +751,7 @@
 
         alarmBox.textContent = alarm.name || 'Wake-up alarm';
         alarmValue.textContent = alarm.trigger_at ? `Next wake-up: ${new Date(alarm.trigger_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'No time';
+        disableButton.disabled = false;
       }
 
       function setupInteraction(config) {
@@ -878,6 +882,13 @@
         const response = await fetch(`/alarms?trigger_at=${encodeURIComponent(trigger.toISOString())}&name=Wake-up`, { method: 'POST' });
         const data = await response.json();
         showToast(`Alarm set for ${new Date(data.trigger_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+        await loadDashboard();
+      });
+
+      document.getElementById('disable-alarm').addEventListener('click', async () => {
+        const response = await fetch('/alarms/disable', { method: 'POST' });
+        const payload = await response.json();
+        showToast(payload.disabled ? 'Alarm disabled' : 'No alarm to disable');
         await loadDashboard();
       });
 

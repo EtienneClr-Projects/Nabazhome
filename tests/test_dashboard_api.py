@@ -1,4 +1,7 @@
+import tempfile
 import unittest
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 
@@ -26,6 +29,26 @@ class DashboardApiTests(unittest.TestCase):
         self.assertIn('weather', payload)
         self.assertIn('alarms', payload)
         self.assertIn('calendar', payload)
+
+    def test_alarm_can_ring_and_be_disabled(self):
+        db_path = Path(tempfile.mkdtemp()) / 'dashboard-alarm.db'
+        app = create_app(Settings(db_path=db_path, debug=True))
+        client = TestClient(app)
+
+        due_time = (datetime.now(timezone.utc) - timedelta(minutes=1)).isoformat()
+        set_response = client.post('/alarms', params={'trigger_at': due_time, 'name': 'Wake-up'})
+        self.assertEqual(set_response.status_code, 200)
+
+        dashboard_response = client.get('/api/dashboard')
+        self.assertTrue(dashboard_response.json()['ringing'])
+        self.assertEqual(len(dashboard_response.json()['alarms']), 1)
+
+        disable_response = client.post('/alarms/disable')
+        self.assertEqual(disable_response.status_code, 200)
+
+        persisted_response = client.get('/api/dashboard')
+        self.assertFalse(persisted_response.json()['ringing'])
+        self.assertEqual(len(persisted_response.json()['alarms']), 0)
 
     def test_animation_endpoint_accepts_supported_actions(self):
         app = create_app(Settings(debug=True))
