@@ -4,8 +4,9 @@ from datetime import datetime
 from typing import Any
 
 from pathlib import Path
+from urllib.parse import parse_qs
 
-from fastapi import FastAPI, Form, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -41,6 +42,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def index() -> FileResponse:
         dashboard_file = dashboard_path / "index.html"
         return FileResponse(dashboard_file)
+
+    @app.on_event("shutdown")
+    def close_database() -> None:
+        database.close()
 
     @app.get("/health")
     def health() -> dict[str, Any]:
@@ -159,7 +164,27 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"text": notification.text, "channel": notification.channel}
 
     @app.post("/api/animation")
-    def trigger_animation(action: str = Form(...)) -> dict[str, Any]:
+    async def trigger_animation(request: Request) -> dict[str, Any]:
+        action: str | None = None
+        content_type = request.headers.get("content-type", "")
+
+        if "application/x-www-form-urlencoded" in content_type or "multipart/form-data" in content_type:
+            body = await request.body()
+            if body:
+                parsed = parse_qs(body.decode("utf-8"), keep_blank_values=True)
+                values = parsed.get("action", [])
+                if values:
+                    action = values[0]
+        else:
+            try:
+                payload = await request.json()
+            except Exception:
+                payload = {}
+            action = payload.get("action")
+
+        if action is None:
+            raise HTTPException(status_code=400, detail="Animation action is required.")
+
         allowed_actions = {
             "right-ear",
             "left-ear",

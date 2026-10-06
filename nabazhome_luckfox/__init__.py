@@ -1,0 +1,1 @@
+"""Nabaztag Luckfox application package."""
