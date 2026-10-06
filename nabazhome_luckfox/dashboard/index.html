@@ -525,7 +525,8 @@
           <div id="alarm-value" class="tiny alarm-value-copy"></div>
 
           <div class="alarm-controls">
-            <button id="disable-alarm" class="secondary-btn" type="button" style="margin-bottom: 12px;">Disable alarm</button>
+            <button id="disable-alarm" class="secondary-btn" type="button" style="margin-bottom: 12px;">Remove alarm</button>
+            <button id="disable-ringing-alarm" class="secondary-btn" type="button" style="display: none; margin-bottom: 12px;">Disable the ringing alarm</button>
             <div class="selector-panel" aria-label="Wake-up time selector">
               <div class="ring ring-hours" id="hours-ring"><div class="dial-container"></div></div>
               <div class="ring ring-minutes" id="minutes-ring"><div class="dial-container"></div></div>
@@ -588,7 +589,7 @@
 
       function renderStatus(data) {
         const device = data.device || {};
-        const value = device.status || 'unknown';
+        const value = data.ringing ? 'alerting' : (device.status || 'unknown');
         document.getElementById('status-value').textContent = value;
         document.getElementById('sync-value').textContent = device.last_sync ? new Date(device.last_sync).toLocaleString() : '—';
         document.getElementById('requested-value').textContent = device.requested_status || '—';
@@ -598,6 +599,7 @@
 
         statusPill.textContent = value;
         statusPill.classList.remove('status-online', 'status-alerting', 'status-booting');
+        statusCard.classList.remove('status-online', 'status-alerting', 'status-booting');
         if (value === 'alerting') {
           statusCard.classList.add('status-alerting');
           statusPill.classList.add('status-alerting');
@@ -717,16 +719,35 @@
         return `${hours}:${minutes}`;
       }
 
+      function formatCountdown(seconds) {
+        const totalSeconds = Math.max(0, Number(seconds) || 0);
+        const days = Math.floor(totalSeconds / 86400);
+        const hours = Math.floor((totalSeconds % 86400) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const remainingSeconds = totalSeconds % 60;
+
+        const parts = [];
+        if (days > 0) parts.push(`${days} day${days > 1 ? 's' : ''}`);
+        if (hours > 0) parts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
+        if (minutes > 0) parts.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
+        if (remainingSeconds > 0 || parts.length === 0) parts.push(`${remainingSeconds} second${remainingSeconds !== 1 ? 's' : ''}`);
+
+        return parts.join(' ');
+      }
+
       function renderAlarm(data) {
         const alarms = data.alarms || [];
         const alarmBox = document.getElementById('alarm-empty');
         const alarmValue = document.getElementById('alarm-value');
         const disableButton = document.getElementById('disable-alarm');
+        const disableRingingButton = document.getElementById('disable-ringing-alarm');
 
         if (!alarms.length) {
           alarmBox.textContent = 'No wake-up alarm set yet.';
           alarmValue.textContent = 'Pick a time to start your morning routine.';
           disableButton.disabled = true;
+          disableButton.style.display = 'inline-flex';
+          disableRingingButton.style.display = 'none';
           return;
         }
 
@@ -750,7 +771,24 @@
         }
 
         alarmBox.textContent = alarm.name || 'Wake-up alarm';
-        alarmValue.textContent = alarm.trigger_at ? `Next wake-up: ${new Date(alarm.trigger_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'No time';
+        if (alarm.trigger_at) {
+          const targetDate = new Date(alarm.trigger_at);
+          const now = new Date();
+          const diffMs = targetDate.getTime() - now.getTime();
+          const totalSeconds = Math.max(0, Math.floor(diffMs / 1000));
+
+          if (diffMs <= 0) {
+            alarmValue.textContent = `Next wake-up: ${targetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (ringing now)`;
+            disableButton.style.display = 'none';
+            disableRingingButton.style.display = 'inline-flex';
+          } else {
+            alarmValue.textContent = `Next wake-up: ${targetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (in ${formatCountdown(totalSeconds)})`;
+            disableButton.style.display = 'inline-flex';
+            disableRingingButton.style.display = 'none';
+          }
+        } else {
+          alarmValue.textContent = 'No time';
+        }
         disableButton.disabled = false;
       }
 
@@ -879,16 +917,33 @@
         const [hours, minutes] = value.split(':').map(Number);
         trigger.setHours(hours, minutes, 0, 0);
 
-        const response = await fetch(`/alarms?trigger_at=${encodeURIComponent(trigger.toISOString())}&name=Wake-up`, { method: 'POST' });
+        if (trigger <= new Date()) {
+          trigger.setDate(trigger.getDate() + 1);
+        }
+
+        const localIso = `${trigger.getFullYear()}-${String(trigger.getMonth() + 1).padStart(2, '0')}-${String(trigger.getDate()).padStart(2, '0')}T${String(trigger.getHours()).padStart(2, '0')}:${String(trigger.getMinutes()).padStart(2, '0')}:00`;
+
+        const response = await fetch(`/alarms?trigger_at=${encodeURIComponent(localIso)}&name=Wake-up`, { method: 'POST' });
         const data = await response.json();
         showToast(`Alarm set for ${new Date(data.trigger_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
         await loadDashboard();
       });
 
+      setInterval(() => {
+        loadDashboard();
+      }, 15000);
+
       document.getElementById('disable-alarm').addEventListener('click', async () => {
         const response = await fetch('/alarms/disable', { method: 'POST' });
         const payload = await response.json();
-        showToast(payload.disabled ? 'Alarm disabled' : 'No alarm to disable');
+        showToast(payload.disabled ? 'Alarm removed' : 'No alarm to remove');
+        await loadDashboard();
+      });
+
+      document.getElementById('disable-ringing-alarm').addEventListener('click', async () => {
+        const response = await fetch('/alarms/disable-ringing', { method: 'POST' });
+        const payload = await response.json();
+        showToast(payload.disabled ? 'Ring silenced; next wake-up moved to tomorrow' : 'No ringing alarm to disable');
         await loadDashboard();
       });
 

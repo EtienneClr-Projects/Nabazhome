@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 from typing import Any
 
@@ -22,6 +23,7 @@ from nabazhome_luckfox.services.weather_service import WeatherService
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
+    logger = logging.getLogger("nabazhome.alarm")
     app = FastAPI(title=settings.app_name)
     dashboard_path = Path(__file__).resolve().parent.parent / "dashboard"
     app.mount("/static", StaticFiles(directory=str(dashboard_path)), name="static")
@@ -30,6 +32,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     board_service = BoardService()
     database = DatabaseManager(settings.db_path)
     alarm_service = AlarmService(database=database)
+    app.state.alarm_service = alarm_service
+    app.state.device_service = device_service
     weather_service = WeatherService(
         latitude=settings.weather_latitude,
         longitude=settings.weather_longitude,
@@ -84,6 +88,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         weather = weather_service.fetch_snapshot()
         active_alarm = alarm_service.get_active_alarm()
         ringing = bool(active_alarm is not None and active_alarm.enabled and alarm_service.is_due(active_alarm))
+        if ringing:
+            logger.info("Alarm due: %s at %s", active_alarm.name if active_alarm else "unknown", active_alarm.trigger_at.isoformat() if active_alarm and active_alarm.trigger_at else "unknown")
+            device_service.set_status("alerting")
+            device = device_service.get_status()
+        elif active_alarm is None or not active_alarm.enabled:
+            device_service.set_status("ready")
+            device = device_service.get_status()
         alarms = []
         if active_alarm is not None and active_alarm.enabled:
             alarms = [{
@@ -97,8 +108,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {
             "device": {
                 "online": device.online,
-                "status": device_service.get_status().status,
-                "requested_status": device_service.get_status().status,
+                "status": device.status,
+                "requested_status": device.requested_status,
                 "last_sync": device.last_sync.isoformat() if device.last_sync else None,
             },
             "weather": {
@@ -138,6 +149,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.post("/alarms/disable")
     def disable_alarm() -> dict[str, Any]:
         disabled = alarm_service.disable_alarm()
+        device_service.set_status("ready")
+        return {"disabled": disabled, "alarms": []}
+
+    @app.post("/alarms/disable-ringing")
+    def disable_ringing_alarm() -> dict[str, Any]:
+        disabled = alarm_service.disable_ringing_alarm()
+        device_service.set_status("ready")
         return {"disabled": disabled, "alarms": []}
 
     @app.delete("/alarms")

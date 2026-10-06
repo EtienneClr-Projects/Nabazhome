@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from nabazhome_luckfox.api.app import create_app
 from nabazhome_luckfox.config.settings import Settings
+from nabazhome_luckfox.domain.alarm import AlarmSchedule
 
 
 class DashboardApiTests(unittest.TestCase):
@@ -35,12 +36,17 @@ class DashboardApiTests(unittest.TestCase):
         app = create_app(Settings(db_path=db_path, debug=True))
         client = TestClient(app)
 
-        due_time = (datetime.now(timezone.utc) - timedelta(minutes=1)).isoformat()
-        set_response = client.post('/alarms', params={'trigger_at': due_time, 'name': 'Wake-up'})
-        self.assertEqual(set_response.status_code, 200)
+        app.state.alarm_service.current_alarm = AlarmSchedule(
+            id='alarm-due-now',
+            name='Wake-up',
+            trigger_at=datetime.now() - timedelta(minutes=1),
+            enabled=True,
+            recurring=True,
+        )
 
         dashboard_response = client.get('/api/dashboard')
         self.assertTrue(dashboard_response.json()['ringing'])
+        self.assertEqual(dashboard_response.json()['device']['status'], 'alerting')
         self.assertEqual(len(dashboard_response.json()['alarms']), 1)
 
         disable_response = client.post('/alarms/disable')
@@ -48,6 +54,7 @@ class DashboardApiTests(unittest.TestCase):
 
         persisted_response = client.get('/api/dashboard')
         self.assertFalse(persisted_response.json()['ringing'])
+        self.assertEqual(persisted_response.json()['device']['status'], 'ready')
         self.assertEqual(len(persisted_response.json()['alarms']), 0)
 
     def test_animation_endpoint_accepts_supported_actions(self):
