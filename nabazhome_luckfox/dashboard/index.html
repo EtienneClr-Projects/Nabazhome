@@ -545,7 +545,6 @@
         <section class="card span-8">
           <h2>Quick actions</h2>
           <div class="action-row">
-            <button id="set-online" class="secondary-btn">Online</button>
             <button id="set-alert" class="secondary-btn">Alert</button>
             <button id="refresh-data" class="secondary-btn">Refresh</button>
           </div>
@@ -889,12 +888,6 @@
       setupInteraction(dials.minutes);
       setupInteraction(dials.ampm);
       updateTimeDisplay();
-
-      document.getElementById('set-online').addEventListener('click', async () => {
-        await fetch('/status?status=ready', { method: 'POST' });
-        showToast('Status updated');
-        await loadDashboard();
-      });
 
       document.getElementById('set-alert').addEventListener('click', async () => {
         await fetch('/notifications?message=Wake%20up&channel=local', { method: 'POST' });
