@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import logging
+import threading
+import time
 from datetime import datetime
 from typing import Any
 
@@ -19,6 +21,18 @@ from nabazhome_luckfox.services.calendar_service import CalendarService
 from nabazhome_luckfox.services.device_service import DeviceService
 from nabazhome_luckfox.services.notification_service import NotificationService
 from nabazhome_luckfox.services.weather_service import WeatherService
+
+
+def refresh_alarm_state(alarm_service: AlarmService, device_service: DeviceService, logger: logging.Logger | None = None) -> bool:
+    active_alarm = alarm_service.get_active_alarm()
+    if active_alarm is not None and active_alarm.enabled and alarm_service.is_due(active_alarm):
+        if logger is not None:
+            logger.info("Alarm due: %s at %s", active_alarm.name if active_alarm else "unknown", active_alarm.trigger_at.isoformat() if active_alarm and active_alarm.trigger_at else "unknown")
+        device_service.set_status("alerting")
+        return True
+    if active_alarm is None or not active_alarm.enabled:
+        device_service.set_status("ready")
+    return False
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -47,8 +61,31 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         dashboard_file = dashboard_path / "index.html"
         return FileResponse(dashboard_file)
 
+    @app.on_event("startup")
+    def start_alarm_monitor() -> None:
+        stop_event = getattr(app.state, "alarm_monitor_stop", None)
+        if stop_event is None:
+            app.state.alarm_monitor_stop = threading.Event()
+            stop_event = app.state.alarm_monitor_stop
+
+        if getattr(app.state, "alarm_monitor", None) is None or not app.state.alarm_monitor.is_alive():
+            def monitor() -> None:
+                while not stop_event.is_set():
+                    try:
+                        refresh_alarm_state(alarm_service, device_service, logger)
+                    except Exception:
+                        logger.exception("Background alarm monitor failed")
+                    stop_event.wait(1.0)
+
+            thread = threading.Thread(target=monitor, daemon=True)
+            app.state.alarm_monitor = thread
+            thread.start()
+
     @app.on_event("shutdown")
     def close_database() -> None:
+        stop_event = getattr(app.state, "alarm_monitor_stop", None)
+        if stop_event is not None:
+            stop_event.set()
         database.close()
 
     @app.get("/health")
@@ -87,14 +124,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         device = device_service.get_status()
         weather = weather_service.fetch_snapshot()
         active_alarm = alarm_service.get_active_alarm()
-        ringing = bool(active_alarm is not None and active_alarm.enabled and alarm_service.is_due(active_alarm))
-        if ringing:
-            logger.info("Alarm due: %s at %s", active_alarm.name if active_alarm else "unknown", active_alarm.trigger_at.isoformat() if active_alarm and active_alarm.trigger_at else "unknown")
-            device_service.set_status("alerting")
-            device = device_service.get_status()
-        elif active_alarm is None or not active_alarm.enabled:
-            device_service.set_status("ready")
-            device = device_service.get_status()
+        ringing = refresh_alarm_state(alarm_service, device_service, logger)
+        device = device_service.get_status()
         alarms = []
         if active_alarm is not None and active_alarm.enabled:
             alarms = [{

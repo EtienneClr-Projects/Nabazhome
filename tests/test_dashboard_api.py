@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from nabazhome_luckfox.api.app import create_app
+from nabazhome_luckfox.api.app import create_app, refresh_alarm_state
 from nabazhome_luckfox.config.settings import Settings
 from nabazhome_luckfox.domain.alarm import AlarmSchedule
 
@@ -56,6 +56,19 @@ class DashboardApiTests(unittest.TestCase):
         self.assertFalse(persisted_response.json()['ringing'])
         self.assertEqual(persisted_response.json()['device']['status'], 'ready')
         self.assertEqual(len(persisted_response.json()['alarms']), 0)
+
+    def test_alarm_due_without_dashboard_polling_sets_alerting_status(self):
+        app = create_app(Settings(debug=True))
+        app.state.alarm_service.current_alarm = AlarmSchedule(
+            id='alarm-background',
+            name='Wake-up',
+            trigger_at=datetime.now() - timedelta(minutes=1),
+            enabled=True,
+            recurring=True,
+        )
+
+        self.assertTrue(refresh_alarm_state(app.state.alarm_service, app.state.device_service))
+        self.assertEqual(app.state.device_service.get_status().status, 'alerting')
 
     def test_animation_endpoint_accepts_supported_actions(self):
         app = create_app(Settings(debug=True))
