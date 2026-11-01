@@ -31,6 +31,23 @@ ssh luckfox '/etc/init.d/S99nabazhome status; test -x /etc/init.d/S99nabazhome'
 ssh luckfox 'tail -n 100 /var/log/nabazhome.log'
 ```
 
+Deployment syncs `deploy/aliases.sh` to `/opt/nabazhome/deploy/aliases.sh`. The installer adds a guarded source line to the SSH user's `~/.profile`, preserving existing contents and avoiding duplicates. New SSH login shells load these aliases automatically:
+
+```sh
+nabazhome-start
+nabazhome-stop
+nabazhome-restart
+nabazhome-status
+```
+
+These aliases call `/etc/init.d/S99nabazhome` with the corresponding action. In an already open board shell, load them once with `. /opt/nabazhome/deploy/aliases.sh`. They belong to the shell, not the service; sourcing them during service startup would not expose them to SSH sessions.
+
+Non-login SSH commands do not automatically load `~/.profile`. Use the direct service commands above, or source the aliases explicitly:
+
+```sh
+ssh luckfox '. /opt/nabazhome/deploy/aliases.sh; nabazhome-restart'
+```
+
 Deployment installs executable `/etc/init.d/S99nabazhome`, which `/etc/init.d/rcS` runs at boot. The service does not automatically restart after crashes. An installed boot script is not evidence of a successful reboot test.
 
 Check HTTP from the computer with `curl --fail http://luckfox:8000/api/dashboard` (adjust the configured port if needed).

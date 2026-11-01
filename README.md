@@ -149,6 +149,17 @@ ssh luckfox '/etc/init.d/S99nabazhome stop'
 ssh luckfox '/etc/init.d/S99nabazhome start'
 ```
 
+Deployment syncs `deploy/aliases.sh` and configures `~/.profile` to load it automatically in new SSH login shells, preserving existing profile contents and avoiding duplicate entries. The aliases control the BusyBox service on the current board:
+
+```sh
+nabazhome-start
+nabazhome-stop
+nabazhome-restart
+nabazhome-status
+```
+
+For an already open shell, run `. /opt/nabazhome/deploy/aliases.sh` once. Aliases belong to the interactive shell; loading them inside the service would not make them available in SSH sessions.
+
 This service starts at boot but does not automatically restart after crashes. `systemctl` and `journalctl` do not work on this image: they require systemd running as PID 1. Installing `systemctl` alone is insufficient; switching init systems requires rebuilding or replacing the board's Linux image. The installer retains systemd support for other images, but it is not used on this board.
 
 The service runs as root to match the board's SSH account and device access. For a manual run, stop the service first, connect with `ssh luckfox`, and run on the board:

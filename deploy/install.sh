@@ -46,6 +46,12 @@ if [ "${NABAZHOME_GOOGLE_CALENDAR_ENABLED:-false}" = true ]; then
 fi
 UV_PYTHON_DOWNLOADS=never UV_CACHE_DIR=/tmp/nabazhome-uv-cache uv sync "$@"
 
+PROFILE="$HOME/.profile"
+ALIAS_SOURCE="[ ! -r $APP_DIR/deploy/aliases.sh ] || . $APP_DIR/deploy/aliases.sh"
+if ! grep -Fxq "$ALIAS_SOURCE" "$PROFILE" 2>/dev/null; then
+    printf '\n%s\n' "$ALIAS_SOURCE" >> "$PROFILE"
+fi
+
 if [ "$INIT" = systemd ]; then
     cp deploy/nabazhome.service /etc/systemd/system/nabazhome.service
     chmod 644 /etc/systemd/system/nabazhome.service
