@@ -1,0 +1,42 @@
+#!/bin/sh
+set -eu
+
+APP_DIR=/opt/nabazhome
+PID_FILE=/run/nabazhome.pid
+LOG_FILE=/var/log/nabazhome.log
+
+start() {
+    if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+        return
+    fi
+    set -a
+    . /etc/default/nabazhome
+    set +a
+    cd "$APP_DIR"
+    umask 077
+    start-stop-daemon --start --background --make-pidfile \
+        --pidfile "$PID_FILE" --exec /bin/sh \
+        -- -c 'exec /opt/nabazhome/.venv/bin/python /opt/nabazhome/main_luckfox.py >> /var/log/nabazhome.log 2>&1'
+}
+
+stop() {
+    if [ -f "$PID_FILE" ]; then
+        start-stop-daemon --stop --pidfile "$PID_FILE" || true
+        rm -f "$PID_FILE"
+    fi
+}
+
+case "${1:-}" in
+    start) start ;;
+    stop) stop ;;
+    restart) stop; start ;;
+    status)
+        if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+            printf '%s\n' 'Nabazhome is running'
+        else
+            printf '%s\n' 'Nabazhome is stopped'
+            exit 1
+        fi
+        ;;
+    *) printf 'Usage: %s {start|stop|restart|status}\n' "$0" >&2; exit 2 ;;
+esac

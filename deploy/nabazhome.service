@@ -1,0 +1,17 @@
+[Unit]
+Description=Nabazhome dashboard and device service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/nabazhome
+EnvironmentFile=/etc/default/nabazhome
+ExecStart=/opt/nabazhome/.venv/bin/python /opt/nabazhome/main_luckfox.py
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=20
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
