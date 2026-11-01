@@ -15,6 +15,10 @@ class Settings:
     weather_latitude: float = 50.698
     weather_longitude: float = 3.177
     weather_api_key: str = ""
+    google_calendar_enabled: bool = False
+    google_calendar_id: str = "primary"
+    google_credentials_path: str = "credentials.json"
+    google_token_path: str = "token.json"
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -27,4 +31,8 @@ class Settings:
             weather_latitude=float(os.getenv("NABAZHOME_LAT", "50.698")),
             weather_longitude=float(os.getenv("NABAZHOME_LON", "3.177")),
             weather_api_key=os.getenv("NABAZHOME_WEATHER_API_KEY", ""),
+            google_calendar_enabled=os.getenv("NABAZHOME_GOOGLE_CALENDAR_ENABLED", "false").lower() == "true",
+            google_calendar_id=os.getenv("NABAZHOME_GOOGLE_CALENDAR_ID", "primary"),
+            google_credentials_path=os.getenv("NABAZHOME_GOOGLE_CREDENTIALS_PATH", "credentials.json"),
+            google_token_path=os.getenv("NABAZHOME_GOOGLE_TOKEN_PATH", "token.json"),
         )

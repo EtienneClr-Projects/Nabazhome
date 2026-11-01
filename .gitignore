@@ -1,4 +1,7 @@
 /Config/credentials.json
+/credentials.json
+/token.json
+/.venv/
 /data/
 *.db
 __pycache__/

@@ -53,7 +53,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         longitude=settings.weather_longitude,
         api_key=settings.weather_api_key,
     )
-    calendar_service = CalendarService()
+    calendar_service = CalendarService(
+        enabled=settings.google_calendar_enabled,
+        calendar_id=settings.google_calendar_id,
+        credentials_path=settings.google_credentials_path,
+        token_path=settings.google_token_path,
+    )
     notification_service = NotificationService()
 
     @app.get("/")
